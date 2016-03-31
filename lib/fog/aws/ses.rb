@@ -18,6 +18,7 @@ module Fog
       request :list_verified_email_addresses
       request :send_email
       request :send_raw_email
+      request :get_identities_verification_attributes
 
       class Mock
         def initialize(options={})
