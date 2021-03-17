@@ -48,7 +48,7 @@ module Fog
         #   * 'SecurityGroupId'<~Array> or <~String> - id's of security group(s) for instances, use this or SecurityGroup
         #   * 'InstanceInitiatedShutdownBehaviour'<~String> - specifies whether volumes are stopped or terminated when instance is shutdown, in [stop, terminate]
         #   * 'InstanceType'<~String> - Type of instance to boot. Valid options
-        #     in ['t1.micro', 't2.micro', 't2.small', 't2.medium', 'm1.small', 'm1.medium', 'm1.large', 'm1.xlarge', 'c1.medium', 'c1.xlarge', 'c3.large', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge', 'g2.2xlarge', 'hs1.8xlarge', 'm2.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'cr1.8xlarge', 'm3.xlarge', 'm3.2xlarge', 'hi1.4xlarge', 'cc1.4xlarge', 'cc2.8xlarge', 'cg1.4xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'i2.8xlarge']
+        #     in ['t1.micro', 't2.nano', 't2.micro', 't2.small', 't2.medium', 'm1.small', 'm1.medium', 'm1.large', 'm1.xlarge', 'c1.medium', 'c1.xlarge', 'c3.large', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge', 'g2.2xlarge', 'hs1.8xlarge', 'm2.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'cr1.8xlarge', 'm3.xlarge', 'm3.2xlarge', 'hi1.4xlarge', 'cc1.4xlarge', 'cc2.8xlarge', 'cg1.4xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'i2.8xlarge']
         #     default is 'm1.small'
         #   * 'KernelId'<~String> - Id of kernel with which to launch
         #   * 'KeyName'<~String> - Name of a keypair to add to booting instances
@@ -217,30 +217,32 @@ module Fog
             end
 
             instance = {
-              'amiLaunchIndex'      => i,
-              'associatePublicIP'   => options['associatePublicIP'] || false,
-              'architecture'        => 'i386',
-              'blockDeviceMapping'  => block_device_mapping,
-              'networkInterfaces'   => network_interfaces,
-              'clientToken'         => options['clientToken'],
-              'dnsName'             => nil,
-              'ebsOptimized'        => options['EbsOptimized'] || false,
-              'hypervisor'          => 'xen',
-              'imageId'             => image_id,
-              'instanceId'          => instance_id,
-              'instanceState'       => { 'code' => 0, 'name' => 'pending' },
-              'instanceType'        => options['InstanceType'] || 'm1.small',
-              'kernelId'            => options['KernelId'] || Fog::AWS::Mock.kernel_id,
-              'keyName'             => options['KeyName'],
-              'launchTime'          => Time.now,
-              'monitoring'          => { 'state' => options['Monitoring.Enabled'] || false },
-              'placement'           => { 'availabilityZone' => availability_zone, 'groupName' => nil, 'tenancy' => options['Placement.Tenancy'] || 'default' },
-              'privateDnsName'      => nil,
-              'productCodes'        => [],
-              'reason'              => nil,
-              'rootDeviceName'      => block_device_mapping.first && block_device_mapping.first["deviceName"],
-              'rootDeviceType'      => 'instance-store',
-              'virtualizationType'  => 'paravirtual'
+              'amiLaunchIndex'        => i,
+              'associatePublicIP'     => options['associatePublicIP'] || false,
+              'architecture'          => 'i386',
+              'blockDeviceMapping'    => block_device_mapping,
+              'networkInterfaces'     => network_interfaces,
+              'clientToken'           => options['clientToken'],
+              'dnsName'               => nil,
+              'ebsOptimized'          => options['EbsOptimized'] || false,
+              'hypervisor'            => 'xen',
+              'imageId'               => image_id,
+              'instanceId'            => instance_id,
+              'instanceState'         => { 'code' => 0, 'name' => 'pending' },
+              'instanceType'          => options['InstanceType'] || 'm1.small',
+              'kernelId'              => options['KernelId'] || Fog::AWS::Mock.kernel_id,
+              'keyName'               => options['KeyName'],
+              'launchTime'            => Time.now,
+              'monitoring'            => { 'state' => options['Monitoring.Enabled'] || false },
+              'placement'             => { 'availabilityZone' => availability_zone, 'groupName' => nil, 'tenancy' => options['Placement.Tenancy'] || 'default' },
+              'privateDnsName'        => nil,
+              'productCodes'          => [],
+              'reason'                => nil,
+              'rootDeviceName'        => block_device_mapping.first && block_device_mapping.first["deviceName"],
+              'rootDeviceType'        => 'instance-store',
+              'spotInstanceRequestId' => options['SpotInstanceRequestId'],
+              'subnetId'              => options['SubnetId'],
+              'virtualizationType'    => 'paravirtual'
             }
             instances_set << instance
             self.data[:instances][instance_id] = instance.merge({

@@ -12,6 +12,7 @@ module Fog
 
       request_path 'fog/aws/requests/auto_scaling'
       request :attach_load_balancers
+      request :attach_load_balancer_target_groups
       request :create_auto_scaling_group
       request :create_launch_configuration
       request :create_or_update_tags
@@ -35,6 +36,7 @@ module Fog
       request :describe_tags
       request :describe_termination_policy_types
       request :detach_load_balancers
+      request :detach_load_balancer_target_groups
       request :detach_instances
       request :attach_instances
       request :disable_metrics_collection
@@ -162,7 +164,7 @@ module Fog
                   when 'ResourceInUse'
                     Fog::AWS::AutoScaling::ResourceInUse.slurp(error, match[:message])
                   when 'ValidationError'
-                    Fog::AWS::AutoScaling::ValidationError.slurp(error, match[:message])
+                    Fog::AWS::AutoScaling::ValidationError.slurp(error, CGI.unescapeHTML(match[:message]))
                   else
                     Fog::AWS::AutoScaling::Error.slurp(error, "#{match[:code]} => #{match[:message]}")
                   end

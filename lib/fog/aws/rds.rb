@@ -29,6 +29,8 @@ module Fog
       request :describe_db_snapshots
       request :create_db_snapshot
       request :delete_db_snapshot
+      request :modify_db_snapshot_attribute
+      request :copy_db_snapshot
 
       request :create_db_parameter_group
       request :delete_db_parameter_group
@@ -49,7 +51,7 @@ module Fog
       request :create_db_subnet_group
       request :describe_db_subnet_groups
       request :delete_db_subnet_group
-      # TODO: :modify_db_subnet_group
+      request :modify_db_subnet_group
 
       request :describe_orderable_db_instance_options
 
@@ -162,7 +164,7 @@ module Fog
           @data = nil
         end
 
-        attr_accessor :region
+        attr_accessor :region, :aws_access_key_id
 
         def initialize(options={})
           @use_iam_profile = options[:use_iam_profile]

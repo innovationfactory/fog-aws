@@ -27,6 +27,7 @@ module Fog
     autoload :CredentialFetcher, File.expand_path('../aws/credential_fetcher', __FILE__)
     autoload :Errors, File.expand_path('../aws/errors', __FILE__)
     autoload :Mock, File.expand_path('../aws/mock', __FILE__)
+    autoload :ServiceMapper, File.expand_path('../aws/service_mapper', __FILE__)
     autoload :SignatureV4, File.expand_path('../aws/signaturev4', __FILE__)
 
     # Services
@@ -36,6 +37,7 @@ module Fog
     autoload :DataPipeline,     File.expand_path('../aws/data_pipeline', __FILE__)
     autoload :DynamoDB,         File.expand_path('../aws/dynamodb', __FILE__)
     autoload :ECS,              File.expand_path('../aws/ecs', __FILE__)
+    autoload :EFS,              File.expand_path('../aws/efs', __FILE__)
     autoload :ELB,              File.expand_path('../aws/elb', __FILE__)
     autoload :EMR,              File.expand_path('../aws/emr', __FILE__)
     autoload :ElasticBeanstalk, File.expand_path('../aws/beanstalk', __FILE__)
@@ -52,6 +54,7 @@ module Fog
     autoload :SNS,              File.expand_path('../aws/sns', __FILE__)
     autoload :SQS,              File.expand_path('../aws/sqs', __FILE__)
     autoload :STS,              File.expand_path('../aws/sts', __FILE__)
+    autoload :Support,          File.expand_path('../aws/support', __FILE__)
     autoload :SimpleDB,         File.expand_path('../aws/simpledb', __FILE__)
 
     service(:auto_scaling,    'AutoScaling')
@@ -65,6 +68,7 @@ module Fog
     service(:dynamodb,        'DynamoDB')
     service(:elasticache,     'Elasticache')
     service(:ecs,             'ECS')
+    service(:efs,             'EFS')
     service(:elb,             'ELB')
     service(:emr,             'EMR')
     service(:federation,      'Federation')
@@ -81,6 +85,7 @@ module Fog
     service(:sqs,             'SQS')
     service(:storage,         'Storage')
     service(:sts,             'STS')
+    service(:support,         'Support')
 
     def self.indexed_param(key, values)
       params = {}
@@ -224,7 +229,7 @@ module Fog
     end
 
     def self.regions
-      @regions ||= ['ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'eu-central-1', 'eu-west-1', 'us-east-1', 'us-west-1', 'us-west-2', 'sa-east-1', 'cn-north-1', 'us-gov-west-1']
+      @regions ||= ['ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'eu-central-1', 'ca-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2', 'sa-east-1', 'cn-north-1', 'us-gov-west-1', 'ap-south-1']
     end
 
     def self.validate_region!(region, host=nil)

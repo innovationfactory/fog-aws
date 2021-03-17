@@ -62,6 +62,7 @@ module Fog
       request :delete_bucket_policy
       request :delete_bucket_website
       request :delete_object
+      request :delete_object_url
       request :delete_multiple_objects
       request :delete_bucket_tagging
       request :get_bucket
@@ -190,6 +191,7 @@ module Fog
 
           params = request_params(params)
           params[:headers][:host] = params[:host]
+          params[:headers][:host] += ":#{params[:port]}" if params.fetch(:port, nil)
 
           signature_query_params = @signer.signature_parameters(params, now, "UNSIGNED-PAYLOAD")
           params[:query] = (params[:query] || {}).merge(signature_query_params)
@@ -585,7 +587,7 @@ module Fog
               params[:headers]['x-amz-content-sha256'] = 'STREAMING-AWS4-HMAC-SHA256-PAYLOAD'
               params[:headers]['x-amz-decoded-content-length'] = params[:headers].delete 'Content-Length'
             else
-              params[:headers]['x-amz-content-sha256'] ||= Digest::SHA256.hexdigest(params[:body] || '')
+              params[:headers]['x-amz-content-sha256'] ||= OpenSSL::Digest::SHA256.hexdigest(params[:body] || '')
             end
             signature_components = @signer.signature_components(params, date, params[:headers]['x-amz-content-sha256'])
             params[:headers]['Authorization'] = @signer.components_to_header(signature_components)
@@ -692,8 +694,8 @@ AWS4-HMAC-SHA256-PAYLOAD
 #{date.to_iso8601_basic}
 #{signer.credential_scope(date)}
 #{previous_signature}
-#{Digest::SHA256.hexdigest('')}
-#{Digest::SHA256.hexdigest(data)}
+#{OpenSSL::Digest::SHA256.hexdigest('')}
+#{OpenSSL::Digest::SHA256.hexdigest(data)}
 DATA
             hmac = signer.derived_hmac(date)
             hmac.sign(string_to_sign.strip).unpack('H*').first

@@ -1,5 +1,282 @@
 # Change Log
 
+## [Unreleased](https://github.com/fog/fog-aws/tree/HEAD)
+
+[Full Changelog](https://github.com/fog/fog-aws/compare/v2.0.0...HEAD)
+
+**Closed issues:**
+
+- Unable to use fog-aws with DigitalOcean Spaces: MissingContentLength [\#428](https://github.com/fog/fog-aws/issues/428)
+- Add new France region [\#424](https://github.com/fog/fog-aws/issues/424)
+- How to set root volume size with bootstrap method? [\#417](https://github.com/fog/fog-aws/issues/417)
+- Update Dependencies [\#227](https://github.com/fog/fog-aws/issues/227)
+
+**Merged pull requests:**
+
+- Expose S3 pre-signed object delete url [\#431](https://github.com/fog/fog-aws/pull/431) ([nolith](https://github.com/nolith))
+- Fronzen strings fix [\#430](https://github.com/fog/fog-aws/pull/430) ([zhulik](https://github.com/zhulik))
+- Expose elastic ip's private\_ip\_address [\#427](https://github.com/fog/fog-aws/pull/427) ([KevinLoiseau](https://github.com/KevinLoiseau))
+- add france \(eu-west-3\) new region, fix \#424 [\#425](https://github.com/fog/fog-aws/pull/425) ([Val](https://github.com/Val))
+
+## [v2.0.0](https://github.com/fog/fog-aws/tree/v2.0.0) (2017-11-28)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.4.1...v2.0.0)
+
+**Closed issues:**
+
+- connect\_write timeout on AWS CodeBuild [\#413](https://github.com/fog/fog-aws/issues/413)
+- cannot load such file -- fog \(LoadError\) [\#401](https://github.com/fog/fog-aws/issues/401)
+- Missing file for extraction? [\#390](https://github.com/fog/fog-aws/issues/390)
+-  Regression: IO stream sent to AWS fails [\#388](https://github.com/fog/fog-aws/issues/388)
+- Stack Level Too Deep on YAML Serialization [\#385](https://github.com/fog/fog-aws/issues/385)
+- models/elb/model\_tests does not properly cleanup [\#347](https://github.com/fog/fog-aws/issues/347)
+- Generates wrong url when region is not DEFAULT\_REGION [\#214](https://github.com/fog/fog-aws/issues/214)
+
+**Merged pull requests:**
+
+- upgrade rubyzip to \>= 1.2.1 [\#416](https://github.com/fog/fog-aws/pull/416) ([lanej](https://github.com/lanej))
+- correction in iam/list\_access\_keys parser: Username should be UserName [\#415](https://github.com/fog/fog-aws/pull/415) ([patleb](https://github.com/patleb))
+- Avoid creating connection if region is not nil [\#414](https://github.com/fog/fog-aws/pull/414) ([hideto0710](https://github.com/hideto0710))
+- Resolving issue where `Fog::Json` was called instead of `Fog::JSON`. [\#412](https://github.com/fog/fog-aws/pull/412) ([mgarrick](https://github.com/mgarrick))
+- Add t2.micro in flavors list [\#411](https://github.com/fog/fog-aws/pull/411) ([KevinLoiseau](https://github.com/KevinLoiseau))
+- Adding AWS P3 Tesla GPU instance types [\#409](https://github.com/fog/fog-aws/pull/409) ([hamelsmu](https://github.com/hamelsmu))
+- Add jitter to exponential backoff [\#408](https://github.com/fog/fog-aws/pull/408) ([masstamike](https://github.com/masstamike))
+- Add emulation of default VPC to mocked mode. [\#407](https://github.com/fog/fog-aws/pull/407) ([rzaharenkov](https://github.com/rzaharenkov))
+- Update rds instance options model [\#406](https://github.com/fog/fog-aws/pull/406) ([carloslima](https://github.com/carloslima))
+- Drop Ruby\<2.0 support [\#405](https://github.com/fog/fog-aws/pull/405) ([tbrisker](https://github.com/tbrisker))
+- allow Gemfile-edge travis builds to fail [\#403](https://github.com/fog/fog-aws/pull/403) ([lanej](https://github.com/lanej))
+- Add `default\_for\_az` attribute to subnet [\#402](https://github.com/fog/fog-aws/pull/402) ([rzaharenkov](https://github.com/rzaharenkov))
+- bundler ~\> 1.15 [\#399](https://github.com/fog/fog-aws/pull/399) ([lanej](https://github.com/lanej))
+- Fix detaching instances from auto scaling group. [\#397](https://github.com/fog/fog-aws/pull/397) ([rzaharenkov](https://github.com/rzaharenkov))
+- Issue \#387 Fog::Compute::AWS::Vpcs returns VPCs with nil ids [\#396](https://github.com/fog/fog-aws/pull/396) ([maguec](https://github.com/maguec))
+- feat\(CONTRIBUTORS\): Update [\#394](https://github.com/fog/fog-aws/pull/394) ([plribeiro3000](https://github.com/plribeiro3000))
+- fix\(Tests\):Remove debugging [\#393](https://github.com/fog/fog-aws/pull/393) ([plribeiro3000](https://github.com/plribeiro3000))
+- Migrate Service mapper from Fog [\#392](https://github.com/fog/fog-aws/pull/392) ([plribeiro3000](https://github.com/plribeiro3000))
+- Add ability to encrypt a copy of an unencrypted snapshot [\#391](https://github.com/fog/fog-aws/pull/391) ([nodecarter](https://github.com/nodecarter))
+- Fix VPC parser [\#389](https://github.com/fog/fog-aws/pull/389) ([ddiachkov](https://github.com/ddiachkov))
+- fix default\_security\_group detection [\#348](https://github.com/fog/fog-aws/pull/348) ([lanej](https://github.com/lanej))
+
+## [v1.4.1](https://github.com/fog/fog-aws/tree/v1.4.1) (2017-08-23)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.4.0...v1.4.1)
+
+**Closed issues:**
+
+- retrieval of ipv6 vpc  [\#379](https://github.com/fog/fog-aws/issues/379)
+- Timeout when trying to bootstrap or ssh spot request instances [\#372](https://github.com/fog/fog-aws/issues/372)
+- Why default VPC does not require Elastic IP to connect in internet [\#338](https://github.com/fog/fog-aws/issues/338)
+- Chunked images response causing Nokogiri::XML::SyntaxError [\#273](https://github.com/fog/fog-aws/issues/273)
+
+**Merged pull requests:**
+
+- Update changelog for 1.4.0 [\#383](https://github.com/fog/fog-aws/pull/383) ([greysteil](https://github.com/greysteil))
+- Allow specifying kms key id to use [\#382](https://github.com/fog/fog-aws/pull/382) ([fcheung](https://github.com/fcheung))
+- added support to retrieve and create vpc with ipv6 cidr block [\#381](https://github.com/fog/fog-aws/pull/381) ([chanakyacool](https://github.com/chanakyacool))
+- Add MaxResults filter to describe reserved instances offerings [\#376](https://github.com/fog/fog-aws/pull/376) ([KevinLoiseau](https://github.com/KevinLoiseau))
+- Fix Fog::Compute::AWS::Images\#all [\#375](https://github.com/fog/fog-aws/pull/375) ([eddiej](https://github.com/eddiej))
+- Fix AWS credential mocking [\#374](https://github.com/fog/fog-aws/pull/374) ([v-yarotsky](https://github.com/v-yarotsky))
+
+## [v1.4.0](https://github.com/fog/fog-aws/tree/v1.4.0) (2017-06-14)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.3.0...v1.4.0)
+
+**Closed issues:**
+
+- Support REST Bucket Get v2 [\#369](https://github.com/fog/fog-aws/issues/369)
+- Fog::AWS::IAM::Error: InvalidAction =\> Could not find operation "ReplaceIamInstanceProfileAssociation" for version 2010-05-08 [\#368](https://github.com/fog/fog-aws/issues/368)
+- Multipart upload fails on empty files [\#364](https://github.com/fog/fog-aws/issues/364)
+- The action `ModifyVolume` is not valid for this web service. [\#363](https://github.com/fog/fog-aws/issues/363)
+- Tag instances upon creation of new instance [\#359](https://github.com/fog/fog-aws/issues/359)
+- Cache/read local amazon data [\#354](https://github.com/fog/fog-aws/issues/354)
+
+**Merged pull requests:**
+
+- add NextContinuationToken support to GetBucket operation [\#370](https://github.com/fog/fog-aws/pull/370) ([khoan](https://github.com/khoan))
+- Add a top-level require that matches the gem name [\#367](https://github.com/fog/fog-aws/pull/367) ([lanej](https://github.com/lanej))
+- Fixed credential refresh when instance metadata host is inaccessible [\#366](https://github.com/fog/fog-aws/pull/366) ([ankane](https://github.com/ankane))
+- Handle multipart upload of empty files [\#365](https://github.com/fog/fog-aws/pull/365) ([fcheung](https://github.com/fcheung))
+- Add p2 instance types [\#362](https://github.com/fog/fog-aws/pull/362) ([Caged](https://github.com/Caged))
+- Exponential backoff [\#361](https://github.com/fog/fog-aws/pull/361) ([VVMichaelSawyer](https://github.com/VVMichaelSawyer))
+- Skip call to instance metadata host if region is specified [\#360](https://github.com/fog/fog-aws/pull/360) ([ankane](https://github.com/ankane))
+
+## [v1.3.0](https://github.com/fog/fog-aws/tree/v1.3.0) (2017-03-29)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.2.1...v1.3.0)
+
+**Closed issues:**
+
+- Do we need to list all files before creating one? [\#357](https://github.com/fog/fog-aws/issues/357)
+
+**Merged pull requests:**
+
+- Authorize vpc to rds sg [\#356](https://github.com/fog/fog-aws/pull/356) ([ehowe](https://github.com/ehowe))
+- classic link enhancements [\#355](https://github.com/fog/fog-aws/pull/355) ([ehowe](https://github.com/ehowe))
+- Add new i3 class instances. [\#353](https://github.com/fog/fog-aws/pull/353) ([rogersd](https://github.com/rogersd))
+- Add check for self.etag before running gsub [\#351](https://github.com/fog/fog-aws/pull/351) ([dmcorboy](https://github.com/dmcorboy))
+- Modify volume [\#350](https://github.com/fog/fog-aws/pull/350) ([ehowe](https://github.com/ehowe))
+
+## [v1.2.1](https://github.com/fog/fog-aws/tree/v1.2.1) (2017-02-27)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.2.0...v1.2.1)
+
+**Closed issues:**
+
+- Fog mock does not mimmick real behaviour for some Excon errors [\#341](https://github.com/fog/fog-aws/issues/341)
+
+**Merged pull requests:**
+
+- Spot fixes [\#349](https://github.com/fog/fog-aws/pull/349) ([ehowe](https://github.com/ehowe))
+- add natGatewayId to describe\_route\_tables [\#346](https://github.com/fog/fog-aws/pull/346) ([mliao2](https://github.com/mliao2))
+- Fog mock accuracy, fixes \#341 [\#344](https://github.com/fog/fog-aws/pull/344) ([easkay](https://github.com/easkay))
+- Subnet [\#343](https://github.com/fog/fog-aws/pull/343) ([ehowe](https://github.com/ehowe))
+- Fix multipart upload [\#340](https://github.com/fog/fog-aws/pull/340) ([nobmurakita](https://github.com/nobmurakita))
+
+## [v1.2.0](https://github.com/fog/fog-aws/tree/v1.2.0) (2017-01-20)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.1.0...v1.2.0)
+
+**Closed issues:**
+
+- Support for AWS Application Load Balancer \(ALB\) [\#335](https://github.com/fog/fog-aws/issues/335)
+
+**Merged pull requests:**
+
+- Better iam policies [\#339](https://github.com/fog/fog-aws/pull/339) ([ehowe](https://github.com/ehowe))
+- Pin nokogiri gem for Ruby 1.9 and Ruby 2.0 [\#337](https://github.com/fog/fog-aws/pull/337) ([sodabrew](https://github.com/sodabrew))
+- Fix parsing of the Reserved Instance 'recurringCharge' field and add 'scope' field [\#336](https://github.com/fog/fog-aws/pull/336) ([sodabrew](https://github.com/sodabrew))
+- Fixes / improvements for AutoScaling [\#334](https://github.com/fog/fog-aws/pull/334) ([lanej](https://github.com/lanej))
+
+## [v1.1.0](https://github.com/fog/fog-aws/tree/v1.1.0) (2016-12-16)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v1.0.0...v1.1.0)
+
+**Closed issues:**
+
+- Support new Ohio region \(us-east-2\) [\#313](https://github.com/fog/fog-aws/issues/313)
+
+**Merged pull requests:**
+
+- Canada and London regions [\#333](https://github.com/fog/fog-aws/pull/333) ([mattheworiordan](https://github.com/mattheworiordan))
+- Updated ELB Dual Stack hosted zone DNS records [\#332](https://github.com/fog/fog-aws/pull/332) ([mattheworiordan](https://github.com/mattheworiordan))
+- Added support for attaching auto scaling groups to target groups [\#330](https://github.com/fog/fog-aws/pull/330) ([maf23](https://github.com/maf23))
+- credential\_fetcher: Mark AWS metadata calls as idempotent [\#329](https://github.com/fog/fog-aws/pull/329) ([mtekel](https://github.com/mtekel))
+
+## [v1.0.0](https://github.com/fog/fog-aws/tree/v1.0.0) (2016-12-12)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.13.0...v1.0.0)
+
+**Merged pull requests:**
+
+- fix host header with another port on s3 [\#327](https://github.com/fog/fog-aws/pull/327) ([rodrigoapereira](https://github.com/rodrigoapereira))
+- Add new t2.xlarge, t2.2xlarge and r4 class instances. [\#326](https://github.com/fog/fog-aws/pull/326) ([rogersd](https://github.com/rogersd))
+- Fix the bug that can't create fifo queue in SQS. [\#323](https://github.com/fog/fog-aws/pull/323) ([ebihara99999](https://github.com/ebihara99999))
+- data pipeline mocks [\#318](https://github.com/fog/fog-aws/pull/318) ([ehowe](https://github.com/ehowe))
+
+## [v0.13.0](https://github.com/fog/fog-aws/tree/v0.13.0) (2016-11-29)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.12.0...v0.13.0)
+
+**Closed issues:**
+
+- Fog::Compute::AWS::Image not properly loaded [\#324](https://github.com/fog/fog-aws/issues/324)
+- Add creation\_date field for aws images [\#320](https://github.com/fog/fog-aws/issues/320)
+- Bug: \[fog\]\[WARNING\] Unrecognized arguments: region, use\_iam\_profile [\#315](https://github.com/fog/fog-aws/issues/315)
+- Better contributing documentation [\#311](https://github.com/fog/fog-aws/issues/311)
+- AutoscalingGroups with a TargetGroup set are not parsed correctly [\#308](https://github.com/fog/fog-aws/issues/308)
+- autoscaling create launch config doesn't work with BlockDeviceMappings  [\#307](https://github.com/fog/fog-aws/issues/307)
+- Is there a configuration setting for the AWS provider to adjust the url scheme for S3 buckets? [\#305](https://github.com/fog/fog-aws/issues/305)
+- DB Subnet Group id for Cluster returns nil [\#292](https://github.com/fog/fog-aws/issues/292)
+
+**Merged pull requests:**
+
+- Fixed some missing parts in change sets [\#322](https://github.com/fog/fog-aws/pull/322) ([nilroy](https://github.com/nilroy))
+- Add creation date and enhanced networking support for images [\#321](https://github.com/fog/fog-aws/pull/321) ([puneetloya](https://github.com/puneetloya))
+- Fix warnings in running tests [\#319](https://github.com/fog/fog-aws/pull/319) ([ebihara99999](https://github.com/ebihara99999))
+- Add `Fog::AWS::STS.Mock\#assume\_role` [\#316](https://github.com/fog/fog-aws/pull/316) ([pedrommonteiro](https://github.com/pedrommonteiro))
+- Ohio region [\#314](https://github.com/fog/fog-aws/pull/314) ([chanakyacool](https://github.com/chanakyacool))
+- mime types gem update [\#312](https://github.com/fog/fog-aws/pull/312) ([lucianosousa](https://github.com/lucianosousa))
+- fix S3 \#delete\_multiple\_objects for UTF-8 names [\#310](https://github.com/fog/fog-aws/pull/310) ([alepore](https://github.com/alepore))
+- Support for target groups \(fix for \#308\) [\#309](https://github.com/fog/fog-aws/pull/309) ([msiuts](https://github.com/msiuts))
+- create, describe, and destroy elastic file systems [\#304](https://github.com/fog/fog-aws/pull/304) ([ehowe](https://github.com/ehowe))
+- Correct optional parameter naming in documentation for Fog::AWS::Auto… [\#302](https://github.com/fog/fog-aws/pull/302) ([ehealy](https://github.com/ehealy))
+- Modify Db subnet group  [\#293](https://github.com/fog/fog-aws/pull/293) ([chanakyacool](https://github.com/chanakyacool))
+
+## [v0.12.0](https://github.com/fog/fog-aws/tree/v0.12.0) (2016-09-22)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.11.0...v0.12.0)
+
+**Implemented enhancements:**
+
+- Add gestion of egress security group rules [\#290](https://github.com/fog/fog-aws/pull/290) ([KevinLoiseau](https://github.com/KevinLoiseau))
+
+**Closed issues:**
+
+- Fog directory appends local system path with amazon url when i try to give dynamic fog directory [\#295](https://github.com/fog/fog-aws/issues/295)
+- Getting OperationAborted error on file storage operation [\#288](https://github.com/fog/fog-aws/issues/288)
+- AWS Elasticsearch API [\#286](https://github.com/fog/fog-aws/issues/286)
+- Disable chunked encoding [\#285](https://github.com/fog/fog-aws/issues/285)
+
+**Merged pull requests:**
+
+- add support endpoint and models/requests for trusted advisor checks [\#300](https://github.com/fog/fog-aws/pull/300) ([ehowe](https://github.com/ehowe))
+- Add attribute is\_default in vpc [\#299](https://github.com/fog/fog-aws/pull/299) ([zhitongLBN](https://github.com/zhitongLBN))
+- Cloud Formation: additional parameters [\#298](https://github.com/fog/fog-aws/pull/298) ([neillturner](https://github.com/neillturner))
+- Cloud Formation: support for change sets, stack policy and other missing calls.   [\#297](https://github.com/fog/fog-aws/pull/297) ([neillturner](https://github.com/neillturner))
+
+## [v0.11.0](https://github.com/fog/fog-aws/tree/v0.11.0) (2016-08-04)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.10.0...v0.11.0)
+
+**Merged pull requests:**
+
+- GitHub does no longer provide http:// pages [\#284](https://github.com/fog/fog-aws/pull/284) ([amatsuda](https://github.com/amatsuda))
+- Skip multipart if body size is less than chunk.  [\#283](https://github.com/fog/fog-aws/pull/283) ([brettcave](https://github.com/brettcave))
+- ECS container credentials [\#281](https://github.com/fog/fog-aws/pull/281) ([ryansch](https://github.com/ryansch))
+- test\(ci\): fix 1.9 builds with json \>= 2.0 [\#280](https://github.com/fog/fog-aws/pull/280) ([lanej](https://github.com/lanej))
+- Change DBSubnetGroup to DBSubnetGroupName model cluster while creation [\#279](https://github.com/fog/fog-aws/pull/279) ([chanakyacool](https://github.com/chanakyacool))
+
+## [v0.10.0](https://github.com/fog/fog-aws/tree/v0.10.0) (2016-07-15)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.9.4...v0.10.0)
+
+**Closed issues:**
+
+- How to setup private files with CloudFront? [\#275](https://github.com/fog/fog-aws/issues/275)
+- Feature: Custom Managed Policies [\#272](https://github.com/fog/fog-aws/issues/272)
+- Question: which aws-sdk version is used [\#270](https://github.com/fog/fog-aws/issues/270)
+- Support an IAM list\_attached\_role\_policies method [\#191](https://github.com/fog/fog-aws/issues/191)
+
+**Merged pull requests:**
+
+- RDS test fixes [\#276](https://github.com/fog/fog-aws/pull/276) ([MrPrimate](https://github.com/MrPrimate))
+- Expanding IAM support [\#274](https://github.com/fog/fog-aws/pull/274) ([MrPrimate](https://github.com/MrPrimate))
+- Rds snapshot improvements [\#269](https://github.com/fog/fog-aws/pull/269) ([tekken](https://github.com/tekken))
+- add default region to use\_iam\_profile [\#268](https://github.com/fog/fog-aws/pull/268) ([shaiguitar](https://github.com/shaiguitar))
+
+## [v0.9.4](https://github.com/fog/fog-aws/tree/v0.9.4) (2016-06-28)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.9.3...v0.9.4)
+
+**Closed issues:**
+
+- S3: retry on 503 Service Unavailable [\#265](https://github.com/fog/fog-aws/issues/265)
+- Digest::Base Error [\#261](https://github.com/fog/fog-aws/issues/261)
+
+**Merged pull requests:**
+
+- Updated Region 'Mumbai' ap-south-1  [\#267](https://github.com/fog/fog-aws/pull/267) ([chanakyacool](https://github.com/chanakyacool))
+- Replaces usage of Digest with OpenSSL::Digest  [\#266](https://github.com/fog/fog-aws/pull/266) ([esthervillars](https://github.com/esthervillars))
+- AWS DNS - support newer DNS hosted zone IDs for dualstack ELBs [\#263](https://github.com/fog/fog-aws/pull/263) ([mattheworiordan](https://github.com/mattheworiordan))
+
+## [v0.9.3](https://github.com/fog/fog-aws/tree/v0.9.3) (2016-06-20)
+[Full Changelog](https://github.com/fog/fog-aws/compare/v0.9.2...v0.9.3)
+
+**Closed issues:**
+
+- Users list is empty in Fog::AWS::IAM::Groups  [\#256](https://github.com/fog/fog-aws/issues/256)
+- I'd like to configure my Excon read\_timeout and write\_timeout  [\#254](https://github.com/fog/fog-aws/issues/254)
+- Bump fog-core to \>=1.38.0 [\#247](https://github.com/fog/fog-aws/issues/247)
+- no implicit conversion of Array into String in `aws/storage.rb` from `bucket\_name` in params. [\#246](https://github.com/fog/fog-aws/issues/246)
+- \[S3\] Bucket name gets duplicated in case of redirect from AWS [\#242](https://github.com/fog/fog-aws/issues/242)
+- CloudFormation stack tags cause describe\_stacks to break [\#240](https://github.com/fog/fog-aws/issues/240)
+
+**Merged pull requests:**
+
+- Parse EbsOptimized parameter in launch configuration description [\#259](https://github.com/fog/fog-aws/pull/259) ([djudd](https://github.com/djudd))
+- Allow case-insensitive record comparison [\#258](https://github.com/fog/fog-aws/pull/258) ([matthewpick](https://github.com/matthewpick))
+- Fix for empty ETag values [\#257](https://github.com/fog/fog-aws/pull/257) ([baryshev](https://github.com/baryshev))
+- do not make requests if mocked. [\#252](https://github.com/fog/fog-aws/pull/252) ([shaiguitar](https://github.com/shaiguitar))
+- Parse CloudWatch alarm actions as arrays instead of strings [\#245](https://github.com/fog/fog-aws/pull/245) ([eherot](https://github.com/eherot))
+- Add support for CloudFormation stack tags. [\#241](https://github.com/fog/fog-aws/pull/241) ([jamesremuscat](https://github.com/jamesremuscat))
+- Add log warning message about when not on us-region [\#200](https://github.com/fog/fog-aws/pull/200) ([kitofr](https://github.com/kitofr))
+
 ## [v0.9.2](https://github.com/fog/fog-aws/tree/v0.9.2) (2016-03-23)
 [Full Changelog](https://github.com/fog/fog-aws/compare/v0.9.1...v0.9.2)
 
@@ -83,7 +360,7 @@
 - Allow region to be set for STS [\#189](https://github.com/fog/fog-aws/pull/189) ([fcheung](https://github.com/fcheung))
 - add cn support for s3 [\#187](https://github.com/fog/fog-aws/pull/187) ([ming-relax](https://github.com/ming-relax))
 - mock instance stop and start properly [\#184](https://github.com/fog/fog-aws/pull/184) ([ehowe](https://github.com/ehowe))
-- Disable idempotent option when block is passed to get\_object [\#183](https://github.com/fog/fog-aws/pull/183) ([wangteji](https://github.com/wangteji))
+- Disable idempotent option when block is passed to get\_object [\#183](https://github.com/fog/fog-aws/pull/183) ([ghost](https://github.com/ghost))
 - Yield arguments to Mock\#get\_object block more similar to Excon [\#182](https://github.com/fog/fog-aws/pull/182) ([tdg5](https://github.com/tdg5))
 - add IAM role paging [\#178](https://github.com/fog/fog-aws/pull/178) ([lanej](https://github.com/lanej))
 - properly mock rds name update [\#170](https://github.com/fog/fog-aws/pull/170) ([ehowe](https://github.com/ehowe))
@@ -397,6 +674,12 @@
 [Full Changelog](https://github.com/fog/fog-aws/compare/v0.0.1...v0.0.2)
 
 ## [v0.0.1](https://github.com/fog/fog-aws/tree/v0.0.1) (2015-01-02)
+[Full Changelog](https://github.com/fog/fog-aws/compare/rm...v0.0.1)
+
+## [rm](https://github.com/fog/fog-aws/tree/rm) (2014-11-27)
+[Full Changelog](https://github.com/fog/fog-aws/compare/fog-brightbox_v0.0.1...rm)
+
+## [fog-brightbox_v0.0.1](https://github.com/fog/fog-aws/tree/fog-brightbox_v0.0.1) (2014-02-19)
 
 
 \* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*

@@ -10,10 +10,15 @@ module Fog
         attribute :availability_zone,           :aliases => 'availabilityZone'
         attribute :tag_set,                     :aliases => 'tagSet'
         attribute :map_public_ip_on_launch,     :aliases => 'mapPublicIpOnLaunch'
+        attribute :default_for_az,              :aliases => 'defaultForAz'
 
         def ready?
           requires :state
           state == 'available'
+        end
+
+        def network_interfaces
+          service.network_interfaces.all('subnet-id' => [self.identity])
         end
 
         # Removes an existing subnet
