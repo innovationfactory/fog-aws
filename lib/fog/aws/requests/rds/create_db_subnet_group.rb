@@ -30,16 +30,15 @@ module Fog
             raise Fog::AWS::RDS::IdentifierTaken.new("DBSubnetGroupAlreadyExists => The subnet group '#{name}' already exists")
           end
 
-          # collection = Fog::Compute::AWS.new(:aws_access_key_id => 'mock key', :aws_secret_access_key => 'mock secret')
-          collection = Fog::Compute[:aws]
-          collection.region = @region
+          # collection = Fog::AWS::Compute.new(:aws_access_key_id => 'mock key', :aws_secret_access_key => 'mock secret')
+          compute_data = Fog::AWS::Compute::Mock.data[self.region][self.aws_access_key_id]
 
           subnets = subnet_ids.map do |snid|
-            subnet = collection.subnets.get(snid)
+            subnet = compute_data[:subnets].detect { |s| s['subnetId'] == snid }
             raise Fog::AWS::RDS::NotFound.new("InvalidSubnet => The subnet '#{snid}' was not found") if subnet.nil?
             subnet
           end
-          vpc_id = subnets.first.vpc_id
+          vpc_id = subnets.first['vpcId']
 
           data = {
             'DBSubnetGroupName' => name,

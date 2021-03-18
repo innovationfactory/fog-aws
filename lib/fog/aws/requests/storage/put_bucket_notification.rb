@@ -1,6 +1,6 @@
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       class Real
         # Change notification configuration for an S3 bucket
         #
@@ -54,7 +54,7 @@ module Fog
           request({
             :body     => body,
             :expects  => 200,
-            :headers  => {'Content-MD5' => Base64.encode64(Digest::MD5.digest(body)).chomp!,
+            :headers  => {'Content-MD5' => Base64.encode64(OpenSSL::Digest::MD5.digest(body)).chomp!,
               'Content-Type' => 'application/xml'},
             :bucket_name => bucket_name,
             :method   => 'PUT',

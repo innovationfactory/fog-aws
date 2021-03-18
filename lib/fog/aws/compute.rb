@@ -1,10 +1,12 @@
 module Fog
-  module Compute
-    class AWS < Fog::Service
+  module AWS
+    class Compute < Fog::Service
       extend Fog::AWS::CredentialFetcher::ServiceMethods
 
+      class RequestLimitExceeded < Fog::Errors::Error; end
+
       requires :aws_access_key_id, :aws_secret_access_key
-      recognizes :endpoint, :region, :host, :path, :port, :scheme, :persistent, :aws_session_token, :use_iam_profile, :aws_credentials_expire_at, :instrumentor, :instrumentor_name, :version
+      recognizes :endpoint, :region, :host, :path, :port, :scheme, :persistent, :aws_session_token, :use_iam_profile, :aws_credentials_expire_at, :instrumentor, :instrumentor_name, :version, :retry_request_limit_exceeded, :retry_jitter_magnitude
 
       secrets    :aws_secret_access_key, :hmac, :aws_session_token
 
@@ -54,6 +56,7 @@ module Fog
       request :attach_classic_link_vpc
       request :attach_internet_gateway
       request :attach_volume
+      request :authorize_security_group_egress
       request :authorize_security_group_ingress
       request :cancel_spot_instance_requests
       request :create_dhcp_options
@@ -98,6 +101,7 @@ module Fog
       request :describe_classic_link_instances
       request :describe_dhcp_options
       request :describe_images
+      request :describe_image_attribute
       request :describe_instances
       request :describe_instance_attribute
       request :describe_internet_gateways
@@ -119,28 +123,35 @@ module Fog
       request :describe_subnets
       request :describe_tags
       request :describe_volumes
+      request :describe_volumes_modifications
       request :describe_volume_status
       request :describe_vpcs
       request :describe_vpc_attribute
       request :describe_vpc_classic_link
+      request :describe_vpc_classic_link_dns_support
       request :detach_network_interface
       request :detach_internet_gateway
       request :detach_volume
       request :detach_classic_link_vpc
       request :disable_vpc_classic_link
+      request :disable_vpc_classic_link_dns_support
       request :disassociate_address
       request :disassociate_route_table
       request :enable_vpc_classic_link
+      request :enable_vpc_classic_link_dns_support
       request :get_console_output
       request :get_password_data
       request :import_key_pair
       request :modify_image_attribute
       request :modify_instance_attribute
+      request :modify_instance_placement
       request :modify_network_interface_attribute
       request :modify_snapshot_attribute
       request :modify_subnet_attribute
+      request :modify_volume
       request :modify_volume_attribute
       request :modify_vpc_attribute
+      request :move_address_to_vpc
       request :purchase_reserved_instances_offering
       request :reboot_instances
       request :release_address
@@ -150,6 +161,8 @@ module Fog
       request :register_image
       request :request_spot_instances
       request :reset_network_interface_attribute
+      request :restore_address_to_classic
+      request :revoke_security_group_egress
       request :revoke_security_group_ingress
       request :run_instances
       request :terminate_instances
@@ -175,14 +188,17 @@ module Fog
 
       class Mock
         MOCKED_TAG_TYPES = {
-          'ami' => 'image',
-          'i' => 'instance',
+          'acl'  => 'network_acl',
+          'ami'  => 'image',
+          'igw'  => 'internet_gateway',
+          'i'    => 'instance',
+          'rtb'  => 'route_table',
           'snap' => 'snapshot',
-          'vol' => 'volume',
-          'igw' => 'internet_gateway',
-          'acl' => 'network_acl',
-          'vpc' => 'vpc'
+          'vol'  => 'volume',
+          'vpc'  => 'vpc'
         }
+
+        VPC_BLANK_VALUE = 'none'
 
         include Fog::AWS::CredentialFetcher::ConnectionMethods
 
@@ -272,7 +288,7 @@ module Fog
                     "attributeName" => "supported-platforms"
                   },
                   {
-                    "values"        => ["none"],
+                    "values"        => [VPC_BLANK_VALUE],
                     "attributeName" => "default-vpc"
                   },
                   {
@@ -283,7 +299,9 @@ module Fog
                     "values"        => ["5"],
                     "attributeName" => "vpc-max-elastic-ips"
                   }
-                ]
+                ],
+                :spot_requests => {},
+                :volume_modifications => {}
               }
             end
           end
@@ -361,9 +379,82 @@ module Fog
           self.data[:account_attributes].find { |h| h["attributeName"] == "supported-platforms" }["values"] = values
         end
 
+        def default_vpc
+          vpc_id = describe_account_attributes.body["accountAttributeSet"].find{ |h| h["attributeName"] == "default-vpc" }["values"].first
+          vpc_id == VPC_BLANK_VALUE ? nil : vpc_id
+        end
+
+        def default_vpc=(value)
+          self.data[:account_attributes].find { |h| h["attributeName"] == "default-vpc" }["values"] = [value]
+        end
+
+        def setup_default_vpc!
+          return if default_vpc.present?
+
+          disable_ec2_classic
+
+          vpc_id = Fog::AWS::Mock.default_vpc_for(region)
+          self.default_vpc = vpc_id
+
+          data[:vpcs] << {
+            'vpcId' => vpc_id,
+            'state' => 'available',
+            'cidrBlock' => '172.31.0.0/16',
+            'dhcpOptionsId' => Fog::AWS::Mock.dhcp_options_id,
+            'tagSet' => {},
+            'instanceTenancy' => 'default',
+            'enableDnsSupport' => true,
+            'enableDnsHostnames' => true,
+            'isDefault' => true
+          }
+
+          internet_gateway_id = Fog::AWS::Mock.internet_gateway_id
+          data[:internet_gateways][internet_gateway_id] = {
+            'internetGatewayId' => internet_gateway_id,
+            'attachmentSet' => {
+              'vpcId' => vpc_id,
+              'state' => 'available'
+            },
+            'tagSet' => {}
+          }
+
+          data[:route_tables] << {
+            'routeTableId' => Fog::AWS::Mock.route_table_id,
+            'vpcId' => vpc_id,
+            'routes' => [
+              {
+                'destinationCidrBlock' => '172.31.0.0/16',
+                'gatewayId' => 'local',
+                'state' => 'active',
+                'origin' => 'CreateRouteTable'
+              },
+              {
+                'destinationCidrBlock' => '0.0.0.0/0',
+                'gatewayId' => internet_gateway_id,
+                'state' => 'active',
+                'origin' => 'CreateRoute'
+              }
+            ]
+          }
+
+          describe_availability_zones.body['availabilityZoneInfo'].map { |z| z['zoneName'] }.each_with_index do |zone, i|
+            data[:subnets] << {
+              'subnetId'                 => Fog::AWS::Mock.subnet_id,
+              'state'                    => 'available',
+              'vpcId'                    => vpc_id,
+              'cidrBlock'                => "172.31.#{i}.0/16",
+              'availableIpAddressCount'  => '251',
+              'availabilityZone'         => zone,
+              'tagSet'                   => {},
+              'mapPublicIpOnLaunch'      => true,
+              'defaultForAz'             => true
+            }
+          end
+        end
+
         def tagged_resources(resources)
           Array(resources).map do |resource_id|
-            if match = resource_id.match(/^(\w+)-[a-z0-9]{8}/i)
+            if match = resource_id.match(/^(\w+)-[a-z0-9]{8,17}/i)
               id = match.captures.first
             else
               raise(Fog::Service::NotFound.new("Unknown resource id #{resource_id}"))
@@ -383,6 +474,10 @@ module Fog
               when 'vpc'
                 if self.data[:vpcs].select {|v| v['vpcId'] == resource_id }.empty?
                   raise(Fog::Service::NotFound.new("Cannot tag #{resource_id}, the vpc does not exist"))
+                end
+              when 'route_table'
+                unless self.data[:route_tables].detect { |r| r['routeTableId'] == resource_id }
+                  raise(Fog::Service::NotFound.new("Cannot tag #{resource_id}, the route table does not exist"))
                 end
               else
                 unless self.data[:"#{type}s"][resource_id]
@@ -453,11 +548,13 @@ module Fog
 
         def initialize(options={})
 
-          @connection_options     = options[:connection_options] || {}
-          @region                 = options[:region] ||= 'us-east-1'
-          @instrumentor           = options[:instrumentor]
-          @instrumentor_name      = options[:instrumentor_name] || 'fog.aws.compute'
-          @version                = options[:version]     ||  '2014-10-01'
+          @connection_options           = options[:connection_options] || {}
+          @region                       = options[:region] ||= 'us-east-1'
+          @instrumentor                 = options[:instrumentor]
+          @instrumentor_name            = options[:instrumentor_name] || 'fog.aws.compute'
+          @version                      = options[:version]     ||  '2016-11-15'
+          @retry_request_limit_exceeded = options.fetch(:retry_request_limit_exceeded, true)
+          @retry_jitter_magnitude       = options[:retry_jitter_magnitude] || 0.1
 
           @use_iam_profile = options[:use_iam_profile]
           setup_credentials(options)
@@ -521,7 +618,11 @@ module Fog
           end
         end
 
-        def _request(body, headers, idempotent, parser)
+        def _request(body, headers, idempotent, parser, retries = 0)
+
+          max_retries = 10
+
+          begin
           @connection.request({
               :body       => body,
               :expects    => 200,
@@ -530,16 +631,43 @@ module Fog
               :method     => 'POST',
               :parser     => parser
             })
-        rescue Excon::Errors::HTTPStatusError => error
-          match = Fog::AWS::Errors.match_error(error)
-          raise if match.empty?
-          raise case match[:code]
+          rescue Excon::Errors::HTTPStatusError => error
+            match = Fog::AWS::Errors.match_error(error)
+            raise if match.empty?
+            raise case match[:code]
                 when 'NotFound', 'Unknown'
-                  Fog::Compute::AWS::NotFound.slurp(error, match[:message])
+                  Fog::AWS::Compute::NotFound.slurp(error, match[:message])
+                when 'RequestLimitExceeded'                  
+                  if @retry_request_limit_exceeded && retries < max_retries
+                    jitter = rand * 10 * @retry_jitter_magnitude
+                    wait_time = ((2.0 ** (1.0 + retries) * 100) / 1000.0) + jitter
+                    Fog::Logger.warning "Waiting #{wait_time} seconds to retry."
+                    sleep(wait_time)
+                    retries += 1
+                    retry
+                  elsif @retry_request_limit_exceeded
+                    Fog::AWS::Compute::RequestLimitExceeded.slurp(error, "Max retries exceeded (#{max_retries}) #{match[:code]} => #{match[:message]}")
+                  else
+                    Fog::AWS::Compute::RequestLimitExceeded.slurp(error, "#{match[:code]} => #{match[:message]}")
+                  end
                 else
-                  Fog::Compute::AWS::Error.slurp(error, "#{match[:code]} => #{match[:message]}")
+                  Fog::AWS::Compute::Error.slurp(error, "#{match[:code]} => #{match[:message]}")
                 end
+          end
         end
+      end
+    end
+  end
+
+  # @deprecated
+  module Compute
+    # @deprecated
+    class AWS < Fog::AWS::Compute
+      # @deprecated
+      # @overrides Fog::Service.new (from the fog-core gem)
+      def self.new(*)
+        Fog::Logger.deprecation 'Fog::Compute::AWS is deprecated, please use Fog::AWS::Compute.'
+        super
       end
     end
   end

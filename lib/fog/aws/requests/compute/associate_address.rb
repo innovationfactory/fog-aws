@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/associate_address'
 
@@ -48,7 +48,7 @@ module Fog
             'PrivateIpAddress'   => params[:private_ip_address],
             'AllowReassociation' => params[:allow_reassociation],
             :idempotent          => true,
-            :parser              => Fog::Parsers::Compute::AWS::AssociateAddress.new
+            :parser              => Fog::Parsers::AWS::Compute::AssociateAddress.new
           )
         end
       end
@@ -80,6 +80,12 @@ module Fog
               if !allocation_ip.nil?
                 public_ip = allocation_ip['publicIp']
                 address = public_ip.nil? ? nil : self.data[:addresses][public_ip]
+
+                if instance['vpcId'] && vpc = self.data[:vpcs].detect { |v| v['vpcId'] == instance['vpcId'] }
+                  if vpc['enableDnsHostnames']
+                    instance['dnsName'] = Fog::AWS::Mock.dns_name_for(public_ip)
+                  end
+                end
               end
             end
             if !address.nil?
@@ -103,21 +109,23 @@ module Fog
                 'return'    => true
               }
             elsif !params[:allocation_id].nil?
+              association_id = "eipassoc-#{Fog::Mock.random_hex(8)}"
+              address['associationId'] = association_id
               response.body = {
                 'requestId'     => Fog::AWS::Mock.request_id,
                 'return'        => true,
-                'associationId' => Fog::AWS::Mock.request_id
+                'associationId' => association_id,
               }
             end
             response
           elsif !instance
-            raise Fog::Compute::AWS::NotFound.new("You must specify either an InstanceId or a NetworkInterfaceID")
+            raise Fog::AWS::Compute::NotFound.new("You must specify either an InstanceId or a NetworkInterfaceID")
           elsif !address
-            raise Fog::Compute::AWS::Error.new("AuthFailure => The address '#{public_ip}' does not belong to you.")
+            raise Fog::AWS::Compute::Error.new("AuthFailure => The address '#{public_ip}' does not belong to you.")
           elsif params[:network_interface_id].nil? && params[:allocation_id].nil?
-            raise Fog::Compute::AWS::NotFound.new("You must specify an AllocationId when specifying a NetworkInterfaceID")
+            raise Fog::AWS::Compute::NotFound.new("You must specify an AllocationId when specifying a NetworkInterfaceID")
           else (!instance.nil? && params[:network_interface_id].nil?) || (params[:instance_id].nil? && !params[:network_interface_id].nil?)
-            raise Fog::Compute::AWS::Error.new("You must specify either an InstanceId or a NetworkInterfaceID")
+            raise Fog::AWS::Compute::Error.new("You must specify either an InstanceId or a NetworkInterfaceID")
           end
         end
       end

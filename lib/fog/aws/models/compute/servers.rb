@@ -1,12 +1,12 @@
 require 'fog/aws/models/compute/server'
 
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Servers < Fog::Collection
         attribute :filters
 
-        model Fog::Compute::AWS::Server
+        model Fog::AWS::Compute::Server
 
         # Creates a new server
         #
@@ -22,6 +22,7 @@ module Fog
         #    ami_launch_index=nil,
         #    availability_zone=nil,
         #    block_device_mapping=nil,
+        #    hibernation_options=nil,
         #    network_interfaces=nil,
         #    client_token=nil,
         #    dns_name=nil,
@@ -119,6 +120,7 @@ module Fog
         #    ami_launch_index=0,
         #    availability_zone="us-east-1b",
         #    block_device_mapping=[],
+        #    hibernation_options=[],
         #    client_token=nil,
         #    dns_name="ec2-25-2-474-44.compute-1.amazonaws.com",
         #    groups=["default"],
@@ -163,10 +165,13 @@ module Fog
             # expect eventual consistency
             if (tags = server.tags) && tags.size > 0
               Fog.wait_for { server.reload rescue nil }
-              service.create_tags(
-                server.identity,
-                tags
-              )
+              Fog.wait_for {
+                begin
+                  service.create_tags(server.identity, tags)
+                rescue Fog::AWS::Compute::NotFound
+                  false
+                end
+              }
             end
             server
           end
@@ -188,7 +193,7 @@ module Fog
 
           security_group = service.security_groups.get(server.groups.first)
           if security_group.nil?
-            raise Fog::Compute::AWS::Error, "The security group" \
+            raise Fog::AWS::Compute::Error, "The security group" \
               " #{server.groups.first} doesn't exist."
           end
 

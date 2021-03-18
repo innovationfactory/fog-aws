@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/basic'
         # Links an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups
@@ -24,9 +24,9 @@ module Fog
             'VpcId'     => vpc_id,
             'InstanceId'=> instance_id,
             'DryRun'    => dry_run,
-            :parser     => Fog::Parsers::Compute::AWS::Basic.new
+            :parser     => Fog::Parsers::AWS::Compute::Basic.new
           }.merge(Fog::AWS.indexed_param('SecurityGroupId', security_group_ids)))
-          
+
         end
       end
 
@@ -38,10 +38,10 @@ module Fog
           instance = self.data[:instances][instance_id]
           if vpc && instance
             if instance['instanceState']['name'] != 'running' || instance['vpcId']
-              raise Fog::Compute::AWS::Error.new("Client.InvalidInstanceID.NotLinkable => Instance #{instance_id} is unlinkable")
+              raise Fog::AWS::Compute::Error.new("Client.InvalidInstanceID.NotLinkable => Instance #{instance_id} is unlinkable")
             end
             if instance['classicLinkVpcId']
-              raise Fog::Compute::AWS::Error.new("Client.InvalidInstanceID.InstanceAlreadyLinked => Instance #{instance_id} is already linked")
+              raise Fog::AWS::Compute::Error.new("Client.InvalidInstanceID.InstanceAlreadyLinked => Instance #{instance_id} is already linked")
             end
 
             response.status = 200
@@ -50,14 +50,14 @@ module Fog
               'return'    => true
             }
             unless dry_run
-              instance['classicLinkSecurityGroups'] = security_group_ids 
+              instance['classicLinkSecurityGroups'] = security_group_ids
               instance['classicLinkVpcId'] = vpc_id
             end
             response
-          elsif !instance 
-            raise Fog::Compute::AWS::NotFound.new("The instance ID '#{instance_id}' does not exist.")
+          elsif !instance
+            raise Fog::AWS::Compute::NotFound.new("The instance ID '#{instance_id}' does not exist.")
           elsif !vpc
-            raise Fog::Compute::AWS::NotFound.new("The VPC '#{vpc_id}' does not exist.")
+            raise Fog::AWS::Compute::NotFound.new("The VPC '#{vpc_id}' does not exist.")
           end
 
         end

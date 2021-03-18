@@ -1,8 +1,8 @@
 require 'fog/aws/models/storage/file'
 
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       class Files < Fog::Collection
         extend Fog::Deprecation
         deprecate :get_url, :get_https_url
@@ -15,7 +15,16 @@ module Fog
         attribute :max_keys,        :aliases => ['MaxKeys', 'max-keys']
         attribute :prefix,          :aliases => 'Prefix'
 
-        model Fog::Storage::AWS::File
+        model Fog::AWS::Storage::File
+
+        DASHED_HEADERS = %w(
+          Cache-Control
+          Content-Disposition
+          Content-Encoding
+          Content-Length
+          Content-MD5
+          Content-Type
+        ).freeze
 
         def all(options = {})
           requires :directory
@@ -70,7 +79,7 @@ module Fog
           when /<Code>NoSuchKey<\/Code>/
             nil
           when /<Code>NoSuchBucket<\/Code>/
-            raise(Fog::Storage::AWS::NotFound.new("Directory #{directory.identity} does not exist."))
+            raise(Fog::AWS::Storage::NotFound.new("Directory #{directory.identity} does not exist."))
           else
             raise(error)
           end
@@ -114,8 +123,29 @@ module Fog
         end
 
         def normalize_headers(data)
-          data.headers['Last-Modified'] = Time.parse(data.get_header('Last-Modified'))
-          data.headers['ETag'] = data.get_header('ETag').gsub('"','')
+          data.headers['Last-Modified'] = Time.parse(fetch_and_delete_header(data, 'Last-Modified'))
+
+          etag = fetch_and_delete_header(data, 'ETag').gsub('"','')
+          data.headers['ETag'] = etag
+
+          DASHED_HEADERS.each do |header|
+            value = fetch_and_delete_header(data, header)
+            data.headers[header] = value if value
+          end
+        end
+
+        private
+
+        def fetch_and_delete_header(response, header)
+          value = response.get_header(header)
+
+          return unless value
+
+          response.headers.keys.each do |key|
+            response.headers.delete(key) if key.downcase == header.downcase
+          end
+
+          value
         end
       end
     end

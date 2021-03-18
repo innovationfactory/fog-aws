@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/run_instances'
 
@@ -30,6 +30,8 @@ module Fog
         #     * 'Ebs.Encrypted'<~Boolean> - specifies whether or not the volume is to be encrypted unless snapshot is specified
         #     * 'Ebs.VolumeType'<~String> - Type of EBS volue. Valid options in ['standard', 'io1'] default is 'standard'.
         #     * 'Ebs.Iops'<~String> - The number of I/O operations per second (IOPS) that the volume supports. Required when VolumeType is 'io1'
+        #   * 'HibernationOptions'<~Array>: array of hashes
+        #     * 'Configured'<~Boolean> - specifies whether or not the instance is configued for hibernation.  This parameter is valid only if the instance meets the hibernation prerequisites.  
         #   * 'NetworkInterfaces'<~Array>: array of hashes
         #     * 'NetworkInterfaceId'<~String> - An existing interface to attach to a single instance
         #     * 'DeviceIndex'<~String> - The device index. Applies both to attaching an existing network interface and creating a network interface
@@ -48,7 +50,7 @@ module Fog
         #   * 'SecurityGroupId'<~Array> or <~String> - id's of security group(s) for instances, use this or SecurityGroup
         #   * 'InstanceInitiatedShutdownBehaviour'<~String> - specifies whether volumes are stopped or terminated when instance is shutdown, in [stop, terminate]
         #   * 'InstanceType'<~String> - Type of instance to boot. Valid options
-        #     in ['t1.micro', 't2.micro', 't2.small', 't2.medium', 'm1.small', 'm1.medium', 'm1.large', 'm1.xlarge', 'c1.medium', 'c1.xlarge', 'c3.large', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge', 'g2.2xlarge', 'hs1.8xlarge', 'm2.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'cr1.8xlarge', 'm3.xlarge', 'm3.2xlarge', 'hi1.4xlarge', 'cc1.4xlarge', 'cc2.8xlarge', 'cg1.4xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'i2.8xlarge']
+        #     in ['t1.micro', 't2.nano', 't2.micro', 't2.small', 't2.medium', 'm1.small', 'm1.medium', 'm1.large', 'm1.xlarge', 'c1.medium', 'c1.xlarge', 'c3.large', 'c3.xlarge', 'c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge', 'g2.2xlarge', 'hs1.8xlarge', 'm2.xlarge', 'm2.2xlarge', 'm2.4xlarge', 'cr1.8xlarge', 'm3.xlarge', 'm3.2xlarge', 'hi1.4xlarge', 'cc1.4xlarge', 'cc2.8xlarge', 'cg1.4xlarge', 'i2.xlarge', 'i2.2xlarge', 'i2.4xlarge', 'i2.8xlarge']
         #     default is 'm1.small'
         #   * 'KernelId'<~String> - Id of kernel with which to launch
         #   * 'KeyName'<~String> - Name of a keypair to add to booting instances
@@ -75,6 +77,8 @@ module Fog
         #           * 'deviceName'<~String> - specifies how volume is exposed to instance
         #           * 'status'<~String> - status of attached volume
         #           * 'volumeId'<~String> - Id of attached volume
+        #         * 'hibernationOptions'<~Array>
+        #           * 'configured'<~Boolean> - whether or not the instance is enabled for hibernation               
         #         * 'dnsName'<~String> - public dns name, blank until instance is running
         #         * 'imageId'<~String> - image id of ami used to launch instance
         #         * 'instanceId'<~String> - id of the instance
@@ -111,6 +115,13 @@ module Fog
               end
             end
           end
+          if hibernation_options = options.delete('HibernationOptions')
+            hibernation_options.each_with_index do |mapping, index|
+              for key, value in mapping
+                options.merge!({ format("HibernationOptions.%d.#{key}", index) => value })
+              end
+            end
+          end
           if security_groups = options.delete('SecurityGroup')
             options.merge!(Fog::AWS.indexed_param('SecurityGroup', [*security_groups]))
           end
@@ -142,7 +153,7 @@ module Fog
             'MinCount'  => min_count,
             'MaxCount'  => max_count,
             :idempotent => idempotent,
-            :parser     => Fog::Parsers::Compute::AWS::RunInstances.new
+            :parser     => Fog::Parsers::AWS::Compute::RunInstances.new
           }.merge!(options))
         end
       end
@@ -157,7 +168,7 @@ module Fog
           reservation_id = Fog::AWS::Mock.reservation_id
 
           if options['KeyName'] && describe_key_pairs('key-name' => options['KeyName']).body['keySet'].empty?
-            raise Fog::Compute::AWS::NotFound.new("The key pair '#{options['KeyName']}' does not exist")
+            raise Fog::AWS::Compute::NotFound.new("The key pair '#{options['KeyName']}' does not exist")
           end
 
           min_count.times do |i|
@@ -179,6 +190,14 @@ module Fog
                 "status"              => "attached",
                 "attachTime"          => Time.now,
                 "deleteOnTermination" => delete_on_termination,
+              }
+            end
+
+	    hibernation_options = (options['HibernationOptions'] || []).reduce([]) do |mapping, device|
+              configure = device.fetch("Configure", true)
+
+              mapping << {
+                "Configure" => configure,
               }
             end
 
@@ -217,30 +236,33 @@ module Fog
             end
 
             instance = {
-              'amiLaunchIndex'      => i,
-              'associatePublicIP'   => options['associatePublicIP'] || false,
-              'architecture'        => 'i386',
-              'blockDeviceMapping'  => block_device_mapping,
-              'networkInterfaces'   => network_interfaces,
-              'clientToken'         => options['clientToken'],
-              'dnsName'             => nil,
-              'ebsOptimized'        => options['EbsOptimized'] || false,
-              'hypervisor'          => 'xen',
-              'imageId'             => image_id,
-              'instanceId'          => instance_id,
-              'instanceState'       => { 'code' => 0, 'name' => 'pending' },
-              'instanceType'        => options['InstanceType'] || 'm1.small',
-              'kernelId'            => options['KernelId'] || Fog::AWS::Mock.kernel_id,
-              'keyName'             => options['KeyName'],
-              'launchTime'          => Time.now,
-              'monitoring'          => { 'state' => options['Monitoring.Enabled'] || false },
-              'placement'           => { 'availabilityZone' => availability_zone, 'groupName' => nil, 'tenancy' => options['Placement.Tenancy'] || 'default' },
-              'privateDnsName'      => nil,
-              'productCodes'        => [],
-              'reason'              => nil,
-              'rootDeviceName'      => block_device_mapping.first && block_device_mapping.first["deviceName"],
-              'rootDeviceType'      => 'instance-store',
-              'virtualizationType'  => 'paravirtual'
+              'amiLaunchIndex'        => i,
+              'associatePublicIP'     => options['associatePublicIP'] || false,
+              'architecture'          => 'i386',
+              'blockDeviceMapping'    => block_device_mapping,
+              'hibernationOptions'    => hibernation_options,
+              'networkInterfaces'     => network_interfaces,
+              'clientToken'           => options['clientToken'],
+              'dnsName'               => nil,
+              'ebsOptimized'          => options['EbsOptimized'] || false,
+              'hypervisor'            => 'xen',
+              'imageId'               => image_id,
+              'instanceId'            => instance_id,
+              'instanceState'         => { 'code' => 0, 'name' => 'pending' },
+              'instanceType'          => options['InstanceType'] || 'm1.small',
+              'kernelId'              => options['KernelId'] || Fog::AWS::Mock.kernel_id,
+              'keyName'               => options['KeyName'],
+              'launchTime'            => Time.now,
+              'monitoring'            => { 'state' => options['Monitoring.Enabled'] || false },
+              'placement'             => { 'availabilityZone' => availability_zone, 'groupName' => nil, 'tenancy' => options['Placement.Tenancy'] || 'default' },
+              'privateDnsName'        => nil,
+              'productCodes'          => [],
+              'reason'                => nil,
+              'rootDeviceName'        => block_device_mapping.first && block_device_mapping.first["deviceName"],
+              'rootDeviceType'        => 'instance-store',
+              'spotInstanceRequestId' => options['SpotInstanceRequestId'],
+              'subnetId'              => options['SubnetId'],
+              'virtualizationType'    => 'paravirtual'
             }
             instances_set << instance
             self.data[:instances][instance_id] = instance.merge({

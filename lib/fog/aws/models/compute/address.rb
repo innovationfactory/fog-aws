@@ -1,14 +1,16 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Address < Fog::Model
         identity  :public_ip,                  :aliases => 'publicIp'
 
+        attribute :private_ip_address,         :aliases => 'privateIpAddress'
         attribute :allocation_id,              :aliases => 'allocationId'
         attribute :association_id,             :aliases => 'associationId'
         attribute :server_id,                  :aliases => 'instanceId'
         attribute :network_interface_id,       :aliases => 'networkInterfaceId'
         attribute :network_interface_owner_id, :aliases => 'networkInterfaceOwnerId'
+        attribute :tags,                       :aliases => 'tagSet'
         attribute :domain
 
         def initialize(attributes = {})
@@ -22,6 +24,16 @@ module Fog
 
           service.release_address(allocation_id || public_ip)
           true
+        end
+
+        def change_scope
+          if self.domain == 'standard'
+            service.move_address_to_vpc(self.identity)
+            wait_for { self.domain == 'vpc' }
+          else
+            service.restore_address_to_classic(self.identity)
+            wait_for { self.domain == 'standard' }
+          end
         end
 
         def server=(new_server)
@@ -63,7 +75,11 @@ module Fog
           @server = nil
           self.server_id = nil
           if persisted?
-            service.disassociate_address(public_ip)
+            if association_id
+              service.disassociate_address(nil, association_id)
+            else
+              service.disassociate_address(public_ip)
+            end
           end
         end
       end

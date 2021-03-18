@@ -43,10 +43,6 @@ Shindo.tests("Storage[:aws] | file", ["aws"]) do
       end
 
       tests('#versions are all for the correct key').returns(true) do
-        # JRuby 1.7.5+ issue causes a SystemStackError: stack level too deep
-        # https://github.com/jruby/jruby/issues/1265
-        pending if RUBY_PLATFORM == "java" and JRUBY_VERSION =~ /1\.7\.[5-8]/
-
         @instance.versions.all? { |v| v.key == @instance.key }
       end
     end
@@ -74,6 +70,18 @@ Shindo.tests("Storage[:aws] | file", ["aws"]) do
 
     end
 
+    tests("multipart upload with empty file") do
+      pending if Fog.mocking?
+
+      @empty_file = Tempfile.new("fog-test-aws-s3-multipart-empty")
+     
+      tests("#save(:multipart_chunk_size => 5242880)").succeeds do
+        @directory.files.create(:key => 'empty-multipart-upload', :body => @empty_file, :multipart_chunk_size => 5242880)
+      end
+
+      @empty_file.close
+    end
+
     tests("multipart upload with customer encryption").returns(true) do
       pending if Fog.mocking?
 
@@ -99,7 +107,7 @@ Shindo.tests("Storage[:aws] | file", ["aws"]) do
       @directory.files.get('multipart-encrypted-upload',
         'x-amz-server-side-encryption-customer-algorithm' => 'AES256',
         'x-amz-server-side-encryption-customer-key' => Base64.encode64(encryption_key).chomp!,
-        'x-amz-server-side-encryption-customer-key-MD5' => Base64.encode64(Digest::MD5.digest(encryption_key.to_s)).chomp!
+        'x-amz-server-side-encryption-customer-key-MD5' => Base64.encode64(OpenSSL::Digest::MD5.digest(encryption_key.to_s)).chomp!
       ).body == "x" * 6*1024**2
     end
 

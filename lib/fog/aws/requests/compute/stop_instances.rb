@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/start_stop_instances'
 
@@ -16,19 +16,27 @@ module Fog
         #     * TODO: fill in the blanks
         #
         # {Amazon API Reference}[http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-StopInstances.html]
-        def stop_instances(instance_id, force = false)
+        def stop_instances(instance_id, options = {})
           params = Fog::AWS.indexed_param('InstanceId', instance_id)
-          params.merge!('Force' => 'true') if force
+          unless options.is_a?(Hash)
+            Fog::Logger.warning("stop_instances with #{options.class} param is deprecated, use stop_instances('force' => boolean) instead [light_black](#{caller.first})[/]")
+            options = {'force' => options}
+          end
+          params.merge!('Force' => 'true') if options['force']
+          if options['hibernate']
+            params.merge!('Hibernate' => 'true')
+            params.merge!('Force' => 'false')
+          end
           request({
             'Action'    => 'StopInstances',
             :idempotent => true,
-            :parser     => Fog::Parsers::Compute::AWS::StartStopInstances.new
+            :parser     => Fog::Parsers::AWS::Compute::StartStopInstances.new
           }.merge!(params))
         end
       end
 
       class Mock
-        def stop_instances(instance_id, force = false)
+        def stop_instances(instance_id, options = {})
           instance_ids = Array(instance_id)
 
           instance_set = self.data[:instances].values
@@ -36,7 +44,7 @@ module Fog
           instance_set = instance_set.select {|x| instance_ids.include?(x["instanceId"]) }
 
           if instance_set.empty?
-            raise Fog::Compute::AWS::NotFound.new("The instance ID '#{instance_ids.first}' does not exist")
+            raise Fog::AWS::Compute::NotFound.new("The instance ID '#{instance_ids.first}' does not exist")
           else
             response = Excon::Response.new
             response.status = 200

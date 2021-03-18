@@ -1,6 +1,6 @@
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       class Real
         require 'fog/aws/requests/storage/acl_utils'
 
@@ -37,7 +37,7 @@ module Fog
           headers = {}
 
           if acl.is_a?(Hash)
-            data = Fog::Storage::AWS.hash_to_acl(acl)
+            data = Fog::AWS::Storage.hash_to_acl(acl)
           else
             if !['private', 'public-read', 'public-read-write', 'authenticated-read'].include?(acl)
               raise Excon::Errors::BadRequest.new('invalid x-amz-acl')
@@ -45,7 +45,7 @@ module Fog
             headers['x-amz-acl'] = acl
           end
 
-          headers['Content-MD5'] = Base64.encode64(Digest::MD5.digest(data)).strip
+          headers['Content-MD5'] = Base64.encode64(OpenSSL::Digest::MD5.digest(data)).strip
           headers['Content-Type'] = 'application/json'
           headers['Date'] = Fog::Time.now.to_date_header
 
@@ -64,7 +64,7 @@ module Fog
       class Mock
         def put_object_acl(bucket_name, object_name, acl, options = {})
           if acl.is_a?(Hash)
-            self.data[:acls][:object][bucket_name][object_name] = Fog::Storage::AWS.hash_to_acl(acl)
+            self.data[:acls][:object][bucket_name][object_name] = Fog::AWS::Storage.hash_to_acl(acl)
           else
             if !['private', 'public-read', 'public-read-write', 'authenticated-read'].include?(acl)
               raise Excon::Errors::BadRequest.new('invalid x-amz-acl')

@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/basic'
 
@@ -49,7 +49,7 @@ module Fog
           request({
             'Action'    => 'AuthorizeSecurityGroupIngress',
             :idempotent => true,
-            :parser     => Fog::Parsers::Compute::AWS::Basic.new
+            :parser     => Fog::Parsers::AWS::Compute::Basic.new
           }.merge!(options))
         end
 
@@ -80,14 +80,16 @@ module Fog
       class Mock
         def authorize_security_group_ingress(group_name, options = {})
           options = Fog::AWS.parse_security_group_options(group_name, options)
-          if options.key?('GroupName')
-            group_name = options['GroupName']
-          else
-            group_name = self.data[:security_groups].reject { |k,v| v['groupId'] != options['GroupId'] } .keys.first
-          end
+
+          group = if options.key?('GroupName')
+                    self.data[:security_groups].values.find { |v| v['groupName'] == options['GroupName'] }
+                  else
+                    self.data[:security_groups][options.fetch('GroupId')]
+                  end
 
           response = Excon::Response.new
-          group = self.data[:security_groups][group_name] || raise(Fog::Compute::AWS::NotFound.new("The security group '#{group_name}' does not exist"))
+          group ||
+            raise(Fog::AWS::Compute::NotFound.new("The security group '#{group_name}' does not exist"))
 
           verify_permission_options(options, group['vpcId'] != nil)
 
@@ -96,11 +98,11 @@ module Fog
           normalized_permissions.each do |permission|
             if matching_group_permission = find_matching_permission(group, permission)
               if permission['groups'].any? {|pg| matching_group_permission['groups'].include?(pg) }
-                raise Fog::Compute::AWS::Error, "InvalidPermission.Duplicate => The permission '123' has already been authorized in the specified group"
+                raise Fog::AWS::Compute::Error, "InvalidPermission.Duplicate => The permission '123' has already been authorized in the specified group"
               end
 
               if permission['ipRanges'].any? {|pr| matching_group_permission['ipRanges'].include?(pr) }
-                raise Fog::Compute::AWS::Error, "InvalidPermission.Duplicate => The permission '123' has already been authorized in the specified group"
+                raise Fog::AWS::Compute::Error, "InvalidPermission.Duplicate => The permission '123' has already been authorized in the specified group"
               end
             end
           end
@@ -126,17 +128,17 @@ module Fog
 
         def verify_permission_options(options, is_vpc)
           if options.size <= 1
-            raise Fog::Compute::AWS::Error.new("InvalidRequest => The request received was invalid.")
+            raise Fog::AWS::Compute::Error.new("InvalidRequest => The request received was invalid.")
           end
           if !is_vpc && options['IpProtocol'] && !['tcp', 'udp', 'icmp'].include?(options['IpProtocol'])
-            raise Fog::Compute::AWS::Error.new("InvalidPermission.Malformed => Unsupported IP protocol \"#{options['IpProtocol']}\"  - supported: [tcp, udp, icmp]")
+            raise Fog::AWS::Compute::Error.new("InvalidPermission.Malformed => Unsupported IP protocol \"#{options['IpProtocol']}\"  - supported: [tcp, udp, icmp]")
           end
           if !is_vpc && (options['IpProtocol'] && (!options['FromPort'] || !options['ToPort']))
-            raise Fog::Compute::AWS::Error.new("InvalidPermission.Malformed => TCP/UDP port (-1) out of range")
+            raise Fog::AWS::Compute::Error.new("InvalidPermission.Malformed => TCP/UDP port (-1) out of range")
           end
           if options.key?('IpPermissions')
             if !options['IpPermissions'].is_a?(Array) || options['IpPermissions'].empty?
-              raise Fog::Compute::AWS::Error.new("InvalidRequest => The request received was invalid.")
+              raise Fog::AWS::Compute::Error.new("InvalidRequest => The request received was invalid.")
             end
             options['IpPermissions'].each {|p| verify_permission_options(p, is_vpc) }
           end
@@ -150,14 +152,15 @@ module Fog
                          else
                            options['SourceSecurityGroupName']
                          end
-            source_group_id=self.data[:security_groups][group_name]['groupId']
+            source_group_id, _ = self.data[:security_groups].find { |_,v| v['groupName'] == group_name }
+
             ['tcp', 'udp'].each do |protocol|
               normalized_permissions << {
                 'ipProtocol' => protocol,
                 'fromPort'   => 1,
                 'toPort'     => 65535,
                 'groups'     => [{
-                  'groupName' => options['SourceSecurityGroupName'],
+                  'groupName' => group_name,
                   'userId'    => options['SourceSecurityGroupOwnerId'] || self.data[:owner_id],
                   'groupId'   => source_group_id
                 }],
@@ -169,7 +172,7 @@ module Fog
               'fromPort'   => -1,
               'toPort'     => -1,
               'groups'     => [{
-                'groupName' => options['SourceSecurityGroupName'],
+                'groupName' => group_name,
                 'userId'    => options['SourceSecurityGroupOwnerId'] || self.data[:owner_id],
                 'groupId'   => source_group_id
               }],
@@ -188,18 +191,19 @@ module Fog
 
               groups = (permission['Groups'] || []).map do |authorized_group|
                 security_group = if group_name = authorized_group['GroupName']
-                                   self.data[:security_groups][group_name]
+                                   self.data[:security_groups].values.find { |sg| sg['groupName'] == group_name }
                                  elsif group_id = authorized_group['GroupId']
-                                   self.data[:security_groups].values.find { |sg| sg['groupId'] == group_id }
-                                 end ||
-                                 raise(Fog::Compute::AWS::NotFound.new("The security group '#{group_name || group_id}' does not exist"))
+                                   self.data[:security_groups][group_id]
+                                 end
+                security_group ||
+                  raise(Fog::AWS::Compute::NotFound.new("The security group '#{group_name || group_id}' does not exist"))
 
-                                 {
-                                   'groupName' => authorized_group['GroupName'] || security_group["groupName"],
-                                   'userId'    => authorized_group['UserId']    || self.data[:owner_id],
-                                   'groupId'   => authorized_group["GroupId"]   || security_group['groupId']
-                                 }
-                  end
+                {
+                  'groupName' => authorized_group['GroupName'] || security_group['groupName'],
+                  'userId'    => authorized_group['UserId']    || self.data[:owner_id],
+                  'groupId'   => authorized_group["GroupId"]   || security_group['groupId']
+                }
+              end
 
 
               if ['tcp', 'udp', 'icmp'].include?(permission['IpProtocol'])
@@ -208,7 +212,7 @@ module Fog
                   'fromPort'   => Integer(permission['FromPort']),
                   'toPort'     => Integer(permission['ToPort']),
                   'groups'     => groups,
-                  'ipRanges' => (permission['IpRanges'] || []).map {|r| { 'cidrIp' => r['CidrIp'] } }
+                  'ipRanges'   => (permission['IpRanges'] || []).map {|r| { 'cidrIp' => r['CidrIp'] } }
                 }
               else
                 normalized_permissions << {

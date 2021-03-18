@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Image < Fog::Model
         identity :id,                     :aliases => 'imageId'
 
@@ -22,6 +22,8 @@ module Fog
         attribute :tags,                  :aliases => 'tagSet'
         attribute :name
         attribute :virtualization_type,   :aliases => 'virtualizationType'
+        attribute :creation_date,         :aliases => 'creationDate'
+        attribute :ena_support,           :aliases => 'enaSupport'
 
         def deregister(delete_snapshot = false)
           service.deregister_image(id)

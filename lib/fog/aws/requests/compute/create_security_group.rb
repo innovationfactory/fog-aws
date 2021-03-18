@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/create_security_group'
 
@@ -25,7 +25,7 @@ module Fog
             'GroupName'         => name,
             'GroupDescription'  => description,
             'VpcId'             => vpc_id,
-            :parser             => Fog::Parsers::Compute::AWS::CreateSecurityGroup.new
+            :parser             => Fog::Parsers::AWS::Compute::CreateSecurityGroup.new
           )
         end
       end
@@ -33,26 +33,31 @@ module Fog
       class Mock
         def create_security_group(name, description, vpc_id=nil)
           response = Excon::Response.new
-          unless self.data[:security_groups][name]
-            data = {
-              'groupDescription'    => description,
-              'groupName'           => name,
-              'groupId'             => Fog::AWS::Mock.security_group_id,
-              'ipPermissionsEgress' => [],
-              'ipPermissions'       => [],
-              'ownerId'             => self.data[:owner_id],
-              'vpcId'               => vpc_id
-            }
-            self.data[:security_groups][name] = data
-            response.body = {
-              'requestId' => Fog::AWS::Mock.request_id,
-              'groupId'   => data['groupId'],
-              'return'    => true
-            }
-            response
-          else
-            raise Fog::Compute::AWS::Error.new("InvalidGroup.Duplicate => The security group '#{name}' already exists")
+
+          vpc_id ||= Fog::AWS::Mock.default_vpc_for(region)
+          group_id = Fog::AWS::Mock.security_group_id
+
+          if self.data[:security_groups].find { |_,v| v['groupName'] == name }
+            raise Fog::AWS::Compute::Error,
+              "InvalidGroup.Duplicate => The security group '#{name}' already exists"
           end
+
+          self.data[:security_groups][group_id] = {
+            'groupDescription'    => description,
+            'groupName'           => name,
+            'groupId'             => group_id,
+            'ipPermissionsEgress' => [],
+            'ipPermissions'       => [],
+            'ownerId'             => self.data[:owner_id],
+            'vpcId'               => vpc_id
+          }
+
+          response.body = {
+            'requestId' => Fog::AWS::Mock.request_id,
+            'groupId'   => group_id,
+            'return'    => true
+          }
+          response
         end
       end
     end

@@ -1,7 +1,7 @@
 module Fog
   module Parsers
-    module Compute
-      module AWS
+    module AWS
+      module Compute
         class DescribeVpcClassicLink < Fog::Parsers::Base
           def reset
             @vpc = { 'tagSet' => {} }
@@ -30,8 +30,10 @@ module Fog
               end
             else
               case name
-              when 'vpcId', 'classicLinkEnabled'
+              when 'vpcId'
                 @vpc[name] = value
+              when 'classicLinkEnabled'
+                @vpc[name] = value == 'true'
               when 'item'
                 @response['vpcSet'] << @vpc
                 @vpc = { 'tagSet' => {} }

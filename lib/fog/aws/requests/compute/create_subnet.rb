@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'ipaddress'
         require 'fog/aws/parsers/compute/create_subnet'
@@ -18,15 +18,17 @@ module Fog
         # * body<~Hash>:
         # * 'requestId'<~String> - Id of request
         # * 'subnet'<~Array>:
-        # * 'subnetId'<~String> - The Subnet's ID
-        # * 'state'<~String> - The current state of the Subnet. ['pending', 'available']
-        # * 'cidrBlock'<~String> - The CIDR block the Subnet covers.
-        # * 'AvailableIpAddressCount'<~Integer> - The number of unused IP addresses in the subnet (the IP addresses for any stopped
-        #   instances are considered unavailable)
-        # * 'AvailabilityZone'<~String> - The Availability Zone the subnet is in
-        # * 'tagSet'<~Array>: Tags assigned to the resource.
-        # * 'key'<~String> - Tag's key
-        # * 'value'<~String> - Tag's value
+        #   * 'subnetId'<~String> - The Subnet's ID
+        #   * 'state'<~String> - The current state of the Subnet. ['pending', 'available']
+        #   * 'cidrBlock'<~String> - The CIDR block the Subnet covers.
+        #   * 'availableIpAddressCount'<~Integer> - The number of unused IP addresses in the subnet (the IP addresses for any stopped
+        #     instances are considered unavailable)
+        #   * 'availabilityZone'<~String> - The Availability Zone the subnet is in
+        #   * 'tagSet'<~Array>: Tags assigned to the resource.
+        #     * 'key'<~String> - Tag's key
+        #     * 'value'<~String> - Tag's value
+        #   * 'mapPublicIpOnLaunch'<~Boolean> - Indicates whether instances launched in this subnet receive a public IPv4 address.
+        #   * 'defaultForAz'<~Boolean> - Indicates whether this is the default subnet for the Availability Zone.
         #
         # {Amazon API Reference}[http://docs.amazonwebservices.com/AWSEC2/2011-07-15/APIReference/ApiReference-query-CreateSubnet.html]
         def create_subnet(vpcId, cidrBlock, options = {})
@@ -34,7 +36,7 @@ module Fog
             'Action'     => 'CreateSubnet',
             'VpcId'      => vpcId,
             'CidrBlock'  => cidrBlock,
-            :parser      => Fog::Parsers::Compute::AWS::CreateSubnet.new
+            :parser      => Fog::Parsers::AWS::Compute::CreateSubnet.new
           }.merge!(options))
         end
       end
@@ -46,14 +48,14 @@ module Fog
             if cidrBlock && vpcId
               vpc = self.data[:vpcs].find{ |v| v['vpcId'] == vpcId }
               if vpc.nil?
-                raise Fog::Compute::AWS::NotFound.new("The vpc ID '#{vpcId}' does not exist")
+                raise Fog::AWS::Compute::NotFound.new("The vpc ID '#{vpcId}' does not exist")
               end
               if ! ::IPAddress.parse(vpc['cidrBlock']).include?(::IPAddress.parse(cidrBlock))
-                raise Fog::Compute::AWS::Error.new("Range => The CIDR '#{cidrBlock}' is invalid.")
+                raise Fog::AWS::Compute::Error.new("Range => The CIDR '#{cidrBlock}' is invalid.")
               end
               self.data[:subnets].select{ |s| s['vpcId'] == vpcId }.each do |subnet|
                 if ::IPAddress.parse(subnet['cidrBlock']).include?(::IPAddress.parse(cidrBlock))
-                  raise Fog::Compute::AWS::Error.new("Conflict => The CIDR '#{cidrBlock}' conflicts with another subnet")
+                  raise Fog::AWS::Compute::Error.new("Conflict => The CIDR '#{cidrBlock}' conflicts with another subnet")
                 end
               end
 
@@ -65,7 +67,9 @@ module Fog
                 'cidrBlock'                => cidrBlock,
                 'availableIpAddressCount'  => "255",
                 'availabilityZone'         => av_zone,
-                'tagSet'                   => {}
+                'tagSet'                   => {},
+                'mapPublicIpOnLaunch'      => true,
+                'defaultForAz'             => true
               }
 
               # Add this subnet to the default network ACL

@@ -1,6 +1,6 @@
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       class Real
         require 'fog/aws/parsers/storage/get_bucket_object_versions'
 
@@ -57,7 +57,7 @@ module Fog
             :bucket_name => bucket_name,
             :idempotent => true,
             :method   => 'GET',
-            :parser   => Fog::Parsers::Storage::AWS::GetBucketObjectVersions.new,
+            :parser   => Fog::Parsers::AWS::Storage::GetBucketObjectVersions.new,
             :query    => {'versions' => nil}.merge!(options)          })
         end
       end
@@ -85,6 +85,7 @@ module Fog
                 'HostId' => Fog::Mock.random_base64(65)
               }
             }
+            raise(Excon::Errors.status_error({:expects => 200}, response))
 
           # Valid case.
           # TODO: (nirvdrum 12/15/11) It's not clear to me how to actually use version-id-marker, so I didn't implement it below.

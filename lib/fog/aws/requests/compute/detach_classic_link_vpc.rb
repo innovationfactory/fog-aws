@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/basic'
         # Links an EC2-Classic instance to a ClassicLink-enabled VPC through one or more of the VPC's security groups
@@ -24,9 +24,8 @@ module Fog
             'VpcId'     => vpc_id,
             'InstanceId'=> instance_id,
             'DryRun'    => dry_run,
-            :parser     => Fog::Parsers::Compute::AWS::Basic.new
+            :parser     => Fog::Parsers::AWS::Compute::Basic.new
           )
-          
         end
       end
 
@@ -47,12 +46,11 @@ module Fog
               instance['classicLinkVpcId'] = nil
             end
             response
-          elsif !instance 
-            raise Fog::Compute::AWS::NotFound.new("The instance ID '#{instance_id}' does not exist.")
+          elsif !instance
+            raise Fog::AWS::Compute::NotFound.new("The instance ID '#{instance_id}' does not exist.")
           elsif !vpc
-            raise Fog::Compute::AWS::NotFound.new("The VPC '#{vpc_id}' does not exist.")
+            raise Fog::AWS::Compute::NotFound.new("The VPC '#{vpc_id}' does not exist.")
           end
-
         end
       end
     end

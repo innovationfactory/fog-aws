@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/describe_instances'
 
@@ -81,7 +81,7 @@ module Fog
           request({
             'Action'    => 'DescribeInstances',
             :idempotent => true,
-            :parser     => Fog::Parsers::Compute::AWS::DescribeInstances.new
+            :parser     => Fog::Parsers::AWS::Compute::DescribeInstances.new
           }.merge!(params))
         end
       end
@@ -178,7 +178,7 @@ module Fog
 
           # Error if filtering for a brand new instance directly
           if (filters['instance-id'] || filters['instanceId']) && !brand_new_instances.empty?
-            raise Fog::Compute::AWS::NotFound.new("The instance ID '#{brand_new_instances.first['instanceId']}' does not exist")
+            raise Fog::AWS::Compute::NotFound.new("The instance ID '#{brand_new_instances.first['instanceId']}' does not exist")
           end
 
           # Otherwise don't include it in the list
@@ -249,7 +249,7 @@ module Fog
                 'ownerId'       => instance['ownerId'],
                 'reservationId' => instance['reservationId']
               }
-              reservation_set[instance['reservationId']]['instancesSet'] << instance.reject{|key,value| !['amiLaunchIndex', 'architecture', 'blockDeviceMapping', 'clientToken', 'dnsName', 'ebsOptimized', 'hypervisor', 'iamInstanceProfile', 'imageId', 'instanceId', 'instanceState', 'instanceType', 'ipAddress', 'kernelId', 'keyName', 'launchTime', 'monitoring', 'networkInterfaces', 'ownerId', 'placement', 'platform', 'privateDnsName', 'privateIpAddress', 'productCodes', 'ramdiskId', 'reason', 'rootDeviceName', 'rootDeviceType', 'stateReason', 'virtualizationType'].include?(key)}.merge('tagSet' => self.data[:tag_sets][instance['instanceId']])
+              reservation_set[instance['reservationId']]['instancesSet'] << instance.reject{|key,value| !['amiLaunchIndex', 'architecture', 'blockDeviceMapping', 'clientToken', 'dnsName', 'ebsOptimized', 'hypervisor', 'iamInstanceProfile', 'imageId', 'instanceId', 'instanceState', 'instanceType', 'ipAddress', 'kernelId', 'keyName', 'launchTime', 'monitoring', 'networkInterfaces', 'ownerId', 'placement', 'platform', 'privateDnsName', 'privateIpAddress', 'productCodes', 'ramdiskId', 'reason', 'rootDeviceName', 'rootDeviceType', 'spotInstanceRequestId', 'stateReason', 'subnetId', 'virtualizationType'].include?(key)}.merge('tagSet' => self.data[:tag_sets][instance['instanceId']])
             end
           end
 

@@ -1,6 +1,6 @@
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       class Real
         # Restore an object from Glacier to its original S3 path
         #
@@ -22,7 +22,7 @@ module Fog
           data = '<RestoreRequest xmlns="http://s3.amazonaws.com/doc/2006-3-01"><Days>' + days.to_s + '</Days></RestoreRequest>'
 
           headers = {}
-          headers['Content-MD5'] = Base64.encode64(Digest::MD5.digest(data)).strip
+          headers['Content-MD5'] = Base64.encode64(OpenSSL::Digest::MD5.digest(data)).strip
           headers['Content-Type'] = 'application/xml'
           headers['Date'] = Fog::Time.now.to_date_header
 

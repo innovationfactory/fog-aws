@@ -1,10 +1,10 @@
 module Fog
-  module Storage
-    class AWS
+  module AWS
+    class Storage
       module SharedMockMethods
         def define_mock_acl(bucket_name, object_name, options)
           acl = options['x-amz-acl'] || 'private'
-          if !['private', 'public-read', 'public-read-write', 'authenticated-read'].include?(acl)
+          if !['private', 'public-read', 'public-read-write', 'authenticated-read', 'bucket-owner-read', 'bucket-owner-full-control'].include?(acl)
             raise Excon::Errors::BadRequest.new('invalid x-amz-acl')
           else
             self.data[:acls][:object][bucket_name] ||= {}
@@ -15,6 +15,7 @@ module Fog
         def parse_mock_data(data)
           data = Fog::Storage.parse_data(data)
           unless data[:body].is_a?(String)
+            data[:body].rewind if data[:body].eof?
             data[:body] = data[:body].read
           end
           data
@@ -50,7 +51,7 @@ module Fog
           object = {
             :body             => body,
             'Content-Type'    => options['Content-Type'],
-            'ETag'            => Digest::MD5.hexdigest(body),
+            'ETag'            => OpenSSL::Digest::MD5.hexdigest(body),
             'Key'             => object_name,
             'Last-Modified'   => Fog::Time.now.to_date_header,
             'Content-Length'  => options['Content-Length'],

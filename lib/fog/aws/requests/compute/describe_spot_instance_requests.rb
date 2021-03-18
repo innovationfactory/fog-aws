@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/spot_instance_requests'
 
@@ -37,8 +37,41 @@ module Fog
           request({
             'Action'    => 'DescribeSpotInstanceRequests',
             :idempotent => true,
-            :parser     => Fog::Parsers::Compute::AWS::SpotInstanceRequests.new
+            :parser     => Fog::Parsers::AWS::Compute::SpotInstanceRequests.new
           }.merge!(params))
+        end
+      end
+
+      class Mock
+        def describe_spot_instance_requests(filters = {})
+          response = Excon::Response.new
+          spot_requests = self.data[:spot_requests].values
+
+          if id = Array(filters['spot-instance-request-id']).first
+            spot_requests = spot_requests.select { |r| r['spotInstanceRequestId'] == id }
+          end
+
+          spot_requests.select { |r| r['instanceId'].nil? }.each do |request|
+            run_instance_options = {
+              'BlockDeviceMapping'    => request['launchSpecification']['blockDeviceMapping'],
+              'EbsOptimized'          => request['launchSpecification']['ebsOptimized'],
+              'KeyName'               => request['launchSpecification']['keyName'],
+              'SecurityGroupId'       => request['launchSpecification']['groupSet'].first,
+              'SpotInstanceRequestId' => request['spotInstanceRequestId'],
+              'SubnetId'              => request['launchSpecification']['subnetId']
+            }
+            instances = run_instances(request['launchSpecification']['imageId'], 1,1, run_instance_options).body['instancesSet']
+
+            request['instanceId'] = instances.first['instanceId']
+            request['state'] = 'active'
+            request['fault'] = {'code' => 'fulfilled', 'message' => 'Your Spot request is fulfilled.'}
+            request['launchedAvailabilityZone'] = instances.first['placement']['availabilityZone']
+
+            self.data[:spot_requests][request['spotInstanceRequestId']] = request
+          end
+
+          response.body = {'spotInstanceRequestSet' => spot_requests, 'requestId' => Fog::AWS::Mock.request_id}
+          response
         end
       end
     end

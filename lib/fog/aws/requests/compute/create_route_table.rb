@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/create_route_table'
 
@@ -27,7 +27,7 @@ module Fog
           request({
             'Action' => 'CreateRouteTable',
             'VpcId' => vpc_id,
-            :parser => Fog::Parsers::Compute::AWS::CreateRouteTable.new
+            :parser => Fog::Parsers::AWS::Compute::CreateRouteTable.new
           })
         end
       end
@@ -39,7 +39,7 @@ module Fog
           unless vpc.nil?
             response.status = 200
             route_table = {
-              'routeTableId' => "rtb-#{Fog::Mock.random_hex(8)}",
+              'routeTableId' => Fog::AWS::Mock.route_table_id,
               'vpcId' => vpc["vpcId"],
               'routeSet' => [{
                 "destinationCidrBlock" => vpc["cidrBlock"],
@@ -60,7 +60,7 @@ module Fog
             }
             response
           else
-            raise Fog::Compute::AWS::NotFound.new("The vpc ID '#{vpc_id}' does not exist")
+            raise Fog::AWS::Compute::NotFound.new("The vpc ID '#{vpc_id}' does not exist")
           end
         end
       end

@@ -1,12 +1,12 @@
 require 'fog/aws/models/compute/image'
 
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Images < Fog::Collection
         attribute :filters
 
-        model Fog::Compute::AWS::Image
+        model Fog::AWS::Compute::Image
 
         # Creates a new Amazon machine image
         #
@@ -32,7 +32,9 @@ module Fog
         #    ramdisk_id=nil,
         #    root_device_type=nil,
         #    root_device_name=nil,
-        #    tags=nil
+        #    tags=nil,
+        #    creation_date=nil,
+        #    ena_support=nil
         #  >
         #
 

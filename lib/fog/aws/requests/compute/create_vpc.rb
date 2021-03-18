@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/create_vpc'
 
@@ -11,7 +11,6 @@ module Fog
         # * options<~Hash>:
         #   * InstanceTenancy<~String> - The allowed tenancy of instances launched into the VPC. A value of default
         #     means instances can be launched with any tenancy; a value of dedicated means instances must be launched with tenancy as dedicated.
-        #     please not that the documentation is incorrect instanceTenancy will not work while InstanceTenancy will
         #
         # === Returns
         # * response<~Excon::Response>:
@@ -31,7 +30,7 @@ module Fog
           request({
             'Action' => 'CreateVpc',
             'CidrBlock' => cidrBlock,
-            :parser => Fog::Parsers::Compute::AWS::CreateVpc.new
+            :parser => Fog::Parsers::AWS::Compute::CreateVpc.new
           }.merge!(options))
         end
       end
@@ -43,15 +42,19 @@ module Fog
               response.status = 200
               vpc_id = Fog::AWS::Mock.vpc_id
               vpc = {
-                'vpcId'              => vpc_id,
-                'state'              => 'pending',
-                'cidrBlock'          => cidrBlock,
-                'dhcpOptionsId'      => Fog::AWS::Mock.request_id,
-                'tagSet'             => {},
-                'enableDnsSupport'   => true,
-                'enableDnsHostnames' => false,
-                'mapPublicIpOnLaunch'=> false,
-                'classicLinkEnabled' => false
+                'vpcId'                       => vpc_id,
+                'state'                       => 'pending',
+                'cidrBlock'                   => cidrBlock,
+                'dhcpOptionsId'               => Fog::AWS::Mock.request_id,
+                'tagSet'                      => {},
+                'enableDnsSupport'            => true,
+                'enableDnsHostnames'          => false,
+                'mapPublicIpOnLaunch'         => false,
+                'classicLinkEnabled'          => false,
+                'classicLinkDnsSupport'       => false,
+                'cidrBlockAssociationSet'     => [{ 'cidrBlock' => cidrBlock, 'state' => 'associated', 'associationId' => "vpc-cidr-assoc-#{vpc_id}" }],
+                'ipv6CidrBlockAssociationSet' => [],
+                'instanceTenancy'             => options['InstanceTenancy'] || 'default'
               }
               self.data[:vpcs].push(vpc)
 
@@ -73,6 +76,32 @@ module Fog
               default_nacl.save
               # Manually override since Amazon doesn't let you create a default one
               self.data[:network_acls][default_nacl.network_acl_id]['default'] = true
+
+
+              # create default security groups
+              default_elb_group_name = "default_elb_#{Fog::Mock.random_hex(6)}"
+              default_elb_group_id = Fog::AWS::Mock.security_group_id
+
+              Fog::AWS::Compute::Mock.data[region][@aws_access_key_id][:security_groups][default_elb_group_id] = {
+                'groupDescription'    => 'default_elb security group',
+                'groupName'           => default_elb_group_name,
+                'groupId'             => default_elb_group_id,
+                'ipPermissions'       => [],
+                'ownerId'             => self.data[:owner_id],
+                'vpcId'               => vpc_id
+              }
+
+              default_group_name = 'default'
+              default_group_id = Fog::AWS::Mock.security_group_id
+
+              Fog::AWS::Compute::Mock.data[region][@aws_access_key_id][:security_groups][default_group_id] = {
+                'groupDescription'    => default_group_name,
+                'groupName'           => default_group_name,
+                'groupId'             => default_group_id,
+                'ipPermissions'       => [],
+                'ownerId'             => self.data[:owner_id],
+                'vpcId'               => vpc_id
+              }
 
               response.body = {
                 'requestId' => Fog::AWS::Mock.request_id,

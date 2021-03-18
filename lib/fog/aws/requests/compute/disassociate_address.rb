@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/basic'
 
@@ -23,16 +23,19 @@ module Fog
             'PublicIp'      => public_ip,
             'AssociationId' => association_id,
             :idempotent     => true,
-            :parser         => Fog::Parsers::Compute::AWS::Basic.new
+            :parser         => Fog::Parsers::AWS::Compute::Basic.new
           )
         end
       end
 
       class Mock
-        def disassociate_address(public_ip)
+        def disassociate_address(public_ip, association_id=nil)
           response = Excon::Response.new
           response.status = 200
           if address = self.data[:addresses][public_ip]
+            if address['allocationId'] && association_id.nil?
+              raise Fog::AWS::Compute::Error.new("InvalidParameterValue => You must specify an association id when unmapping an address from a VPC instance")
+            end
             instance_id = address['instanceId']
             if instance = self.data[:instances][instance_id]
               instance['ipAddress']         = instance['originalIpAddress']
@@ -46,7 +49,7 @@ module Fog
             }
             response
           else
-            raise Fog::Compute::AWS::Error.new("AuthFailure => The address '#{public_ip}' does not belong to you.")
+            raise Fog::AWS::Compute::Error.new("AuthFailure => The address '#{public_ip}' does not belong to you.")
           end
         end
       end

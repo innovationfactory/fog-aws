@@ -21,7 +21,9 @@ Shindo.tests('Fog::Compute[:aws] | image requests', ['aws']) do
       'rootDeviceType'      => String,
       'stateReason'         => {},
       'tagSet'              => {},
-      'virtualizationType'  => String
+      'virtualizationType'  => String,
+      'creationDate' => Fog::Nullable::Time,
+      'enaSupport' => Fog::Nullable::Boolean
     }],
     'requestId'     => String,
   }
@@ -34,6 +36,11 @@ Shindo.tests('Fog::Compute[:aws] | image requests', ['aws']) do
   @modify_image_attribute_format = {
     'return'                => Fog::Boolean,
     'requestId'             => String
+  }
+  @describe_image_attribute_format = {
+    'requestId'             => String,
+    'imageId'               => String,
+    'launchPermission'      => [Fog::Nullable::String]
   }
   @create_image_format = {
     'requestId'             => String,
@@ -53,7 +60,7 @@ Shindo.tests('Fog::Compute[:aws] | image requests', ['aws']) do
     @image_id = 'ami-1aad5273'
 
     if Fog.mocking?
-      @other_account = Fog::Compute::AWS.new(:aws_access_key_id => 'other', :aws_secret_access_key => 'account')
+      @other_account = Fog::AWS::Compute.new(:aws_access_key_id => 'other', :aws_secret_access_key => 'account')
 
       @server = Fog::Compute[:aws].servers.create
       @server.wait_for{state == 'running'}
@@ -111,6 +118,10 @@ Shindo.tests('Fog::Compute[:aws] | image requests', ['aws']) do
         Fog::Compute[:aws].modify_image_attribute(@image_id, { 'Add.UserId' => [@other_account.data[:owner_id]] }).body
       end
 
+      tests("#describe_image_attribute('#{@image_id}', 'launchPermission'])").formats(@describe_image_attribute_format) do
+        Fog::Compute[:aws].describe_image_attribute(@image_id, 'launchPermission' ).body
+      end
+
       tests("other_account#describe_images('image-id' => '#{@image_id}')").returns([@image_id]) do
         @other_account.describe_images('image-id' => @image_id).body['imagesSet'].map {|i| i['imageId'] }
       end
@@ -149,7 +160,7 @@ Shindo.tests('Fog::Compute[:aws] | image requests', ['aws']) do
       Fog::Compute[:aws].modify_image_attribute(nil, { 'Add.Group' => ['all'] }).body
     end
 
-    tests("#modify_image_attribute('ami-00000000', { 'Add.UserId' => ['123456789012'] })").raises(Fog::Compute::AWS::NotFound) do
+    tests("#modify_image_attribute('ami-00000000', { 'Add.UserId' => ['123456789012'] })").raises(Fog::AWS::Compute::NotFound) do
       pending unless Fog.mocking?
 
       Fog::Compute[:aws].modify_image_attribute('ami-00000000', { 'Add.UserId' => ['123456789012'] }).body

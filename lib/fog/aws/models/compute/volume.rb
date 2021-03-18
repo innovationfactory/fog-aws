@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Volume < Fog::Model
         identity  :id,                    :aliases => 'volumeId'
 
@@ -21,7 +21,7 @@ module Fog
 
         def initialize(attributes = {})
           # assign server first to prevent race condition with persisted?
-          self.server = attributes.delete(:server)
+          @server = attributes.delete(:server)
           super
         end
 
@@ -36,44 +36,49 @@ module Fog
           state == 'available'
         end
 
+        def modification_in_progress?
+          modifications.any? { |m| m['modificationState'] != 'completed' }
+        end
+
+        def modifications
+          requires :identity
+          service.describe_volumes_modifications('volume-id' => self.identity).body['volumeModificationSet']
+        end
+
         def save
-          raise Fog::Errors::Error.new('Resaving an existing object may create a duplicate') if persisted?
-          requires :availability_zone
-          requires_one :size, :snapshot_id
+          if identity
+            update_params = {
+              'Size'       => self.size,
+              'Iops'       => self.iops,
+              'VolumeType' => self.type
+            }
 
-          if type == 'io1'
-            requires :iops
+            service.modify_volume(self.identity, update_params)
+            true
+          else
+            requires :availability_zone
+            requires_one :size, :snapshot_id
+
+            requires :iops if type == 'io1'
+
+            data = service.create_volume(availability_zone, size, create_params).body
+            merge_attributes(data)
+
+            if tags = self.tags
+              # expect eventual consistency
+              Fog.wait_for { service.volumes.get(identity) }
+              service.create_tags(identity, tags)
+            end
+
+            attach(@server, device) if @server && device
           end
 
-          data = service.create_volume(availability_zone, size, create_params).body
-          merge_attributes(data)
-
-          if tags = self.tags
-            # expect eventual consistency
-            Fog.wait_for { self.reload rescue nil }
-            service.create_tags(
-              self.identity,
-              tags
-            )
-          end
-
-          if @server
-            self.server = @server
-          end
           true
         end
 
         def server
           requires :server_id
           service.servers.get(server_id)
-        end
-
-        def server=(new_server)
-          if new_server
-            attach(new_server)
-          else
-            detach
-          end
         end
 
         def snapshots
@@ -90,22 +95,15 @@ module Fog
           detach(true)
         end
 
-        private
-
-        def attachmentSet=(new_attachment_set)
-          merge_attributes(new_attachment_set.first || {})
-        end
-
-        def attach(new_server)
+        def attach(new_server, new_device)
           if !persisted?
             @server = new_server
             self.availability_zone = new_server.availability_zone
           elsif new_server
-            requires :device
             wait_for { ready? }
             @server = nil
             self.server_id = new_server.id
-            service.attach_volume(server_id, id, device)
+            service.attach_volume(server_id, id, new_device)
             reload
           end
         end
@@ -117,6 +115,16 @@ module Fog
             service.detach_volume(id, 'Force' => force)
             reload
           end
+        end
+
+        def server=(_)
+          raise NoMethodError, 'use Fog::AWS::Compute::Volume#attach(server, device)'
+        end
+
+        private
+
+        def attachmentSet=(new_attachment_set)
+          merge_attributes(new_attachment_set.first || {})
         end
 
         def create_params

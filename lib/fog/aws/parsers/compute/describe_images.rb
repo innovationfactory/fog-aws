@@ -1,7 +1,7 @@
 module Fog
   module Parsers
-    module Compute
-      module AWS
+    module AWS
+      module Compute
         class DescribeImages < Fog::Parsers::Base
           def reset
             @block_device_mapping = {}
@@ -68,12 +68,14 @@ module Fog
               case name
               when 'architecture', 'description', 'hypervisor', 'imageId', 'imageLocation', 'imageOwnerAlias', 'imageOwnerId', 'imageState', 'imageType', 'kernelId', 'name', 'platform', 'ramdiskId', 'rootDeviceType','rootDeviceName','virtualizationType'
                 @image[name] = value
-              when 'isPublic'
+              when 'isPublic','enaSupport'
                 if value == 'true'
                   @image[name] = true
                 else
                   @image[name] = false
                 end
+              when 'creationDate'
+                @image[name] = Time.parse(value) if value && !value.empty?
               when 'item'
                 @response['imagesSet'] << @image
                 @image = { 'blockDeviceMapping' => [], 'productCodes' => [], 'stateReason' => {}, 'tagSet' => {} }

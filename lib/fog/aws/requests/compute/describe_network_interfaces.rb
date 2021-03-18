@@ -1,6 +1,6 @@
 module Fog
-  module Compute
-    class AWS
+  module AWS
+    class Compute
       class Real
         require 'fog/aws/parsers/compute/describe_network_interfaces'
 
@@ -57,7 +57,7 @@ module Fog
           request({
             'Action' => 'DescribeNetworkInterfaces',
             :idempotent => true,
-            :parser => Fog::Parsers::Compute::AWS::DescribeNetworkInterfaces.new
+            :parser => Fog::Parsers::AWS::Compute::DescribeNetworkInterfaces.new
           }.merge!(params))
         end
       end
@@ -67,6 +67,10 @@ module Fog
           response = Excon::Response.new
 
           network_interface_info = self.data[:network_interfaces].values
+
+          if subnet_filter = filters.delete('subnet-id')
+            filters['subnetId'] = subnet_filter
+          end
 
           for filter_key, filter_value in filters
             network_interface_info = network_interface_info.reject{|nic| ![*filter_value].include?(nic[filter_key])}

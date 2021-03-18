@@ -1,11 +1,11 @@
 module Fog
   module Parsers
-    module Compute
-      module AWS
+    module AWS
+      module Compute
         class CreateSnapshot < Fog::Parsers::Base
           def end_element(name)
             case name
-            when 'description', 'ownerId', 'progress', 'snapshotId', 'status', 'volumeId'
+            when 'description', 'ownerId', 'progress', 'snapshotId', 'status', 'volumeId', 'statusMessage'
               @response[name] = value
             when 'requestId'
               @response[name] = value
